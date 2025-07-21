@@ -44,10 +44,13 @@ interface PlannerSlice extends PlannerState {
   previousGameweek: () => void;
   validateSquad: () => { isValid: boolean; errors: string[]; warnings: string[] };
   autoPickTeam: (players: any[], budget: number) => void;
+  makeTransfer: (playerOutId: number, playerInId: number) => { success: boolean; cost: number; message: string };
+  getFreeTransfersForGameweek: (gameweek: number) => number;
+  getTransferCost: (gameweek: number) => number;
 }
 
 // Combined store type
-type Store = PreferencesSlice & ScenariosSlice & PlannerSlice;
+interface Store extends PreferencesSlice, ScenariosSlice, PlannerSlice {}
 
 // Create the store
 export const useStore = create<Store>()(
@@ -63,11 +66,13 @@ export const useStore = create<Store>()(
       activeScenarioId: null,
 
       // Planner state
-      currentFormation: { gk: 1, def: 4, mid: 4, fwd: 2 },
+      currentFormation: { gk: 1, def: 4, mid: 4, fwd: 2 }, // 4-4-2 formation (starting XI only)
       selectedPlayers: [],
       availableBudget: 100.0,
       transferCount: 0,
       currentGameweek: 1,
+      freeTransfers: Infinity, // Unlimited transfers before gameweek 1
+      transferHistory: [],
 
       // Preferences actions
       setLanguage: (language) => set({ language }),
@@ -231,9 +236,18 @@ export const useStore = create<Store>()(
 
       setBudget: (budget) => set({ availableBudget: budget }),
       setTransferCount: (count) => set({ transferCount: count }),
-      setCurrentGameweek: (gameweek) => set({ currentGameweek: gameweek }),
-      nextGameweek: () => set(state => ({ currentGameweek: state.currentGameweek + 1 })),
-      previousGameweek: () => set(state => ({ currentGameweek: state.currentGameweek - 1 })),
+      setCurrentGameweek: (gameweek) => set(state => ({ 
+        currentGameweek: gameweek,
+        freeTransfers: state.getFreeTransfersForGameweek(gameweek)
+      })),
+      nextGameweek: () => set(state => ({ 
+        currentGameweek: state.currentGameweek + 1,
+        freeTransfers: state.getFreeTransfersForGameweek(state.currentGameweek + 1)
+      })),
+      previousGameweek: () => set(state => ({ 
+        currentGameweek: state.currentGameweek - 1,
+        freeTransfers: state.getFreeTransfersForGameweek(state.currentGameweek - 1)
+      })),
 
       autoPickTeam: (players, budget) => {
         const { currentFormation } = get();
@@ -365,6 +379,87 @@ export const useStore = create<Store>()(
         const { selectedPlayers } = get();
         return FormationValidator.validateSquad(selectedPlayers);
       },
+
+      makeTransfer: (playerOutId: number, playerInId: number) => {
+        const { selectedPlayers, freeTransfers, currentGameweek, transferHistory } = get();
+        
+        // Check if player out exists in squad
+        const playerOutIndex = selectedPlayers.findIndex(p => p.playerId === playerOutId);
+        if (playerOutIndex === -1) {
+          return { success: false, cost: 0, message: 'Player not found in squad' };
+        }
+        
+        // Check if player in is already in squad
+        const playerInExists = selectedPlayers.some(p => p.playerId === playerInId);
+        if (playerInExists) {
+          return { success: false, cost: 0, message: 'Player already in squad' };
+        }
+        
+        // Calculate transfer cost
+        let cost = 0;
+        let message = 'Free transfer used';
+        
+        if (freeTransfers === Infinity || freeTransfers > 0) {
+          // Use free transfer (unlimited in gameweek 1, or available free transfers)
+          if (freeTransfers !== Infinity) {
+            set(state => ({ freeTransfers: state.freeTransfers - 1 }));
+          }
+        } else {
+          // Extra transfer costs 4 points
+          cost = 4;
+          message = 'Extra transfer (-4 points)';
+        }
+        
+        // Record the transfer
+        const transferRecord = {
+          id: Date.now().toString(),
+          gameweek: currentGameweek,
+          playerOut: playerOutId,
+          playerIn: playerInId,
+          timestamp: new Date().toISOString(),
+          cost
+        };
+        
+        set(state => ({ 
+          transferHistory: [...state.transferHistory, transferRecord],
+          transferCount: state.transferCount + 1
+        }));
+        
+        return { success: true, cost, message };
+      },
+
+      getFreeTransfersForGameweek: (gameweek: number) => {
+        const { transferHistory } = get();
+        
+        // Before gameweek 1: unlimited free transfers
+        if (gameweek === 1) {
+          return Infinity;
+        }
+        
+        // Start with 1 free transfer per gameweek (starting from gameweek 2)
+        let freeTransfers = 1;
+        
+        // Add saved transfers from previous gameweeks (starting from gameweek 2)
+        for (let gw = 2; gw < gameweek; gw++) {
+          const gwTransfers = transferHistory.filter(t => t.gameweek === gw);
+          const usedTransfers = gwTransfers.length;
+          const savedTransfers = Math.max(0, 1 - usedTransfers);
+          freeTransfers += savedTransfers;
+        }
+        
+        // Subtract used transfers in current gameweek
+        const currentGwTransfers = transferHistory.filter(t => t.gameweek === gameweek);
+        const usedInCurrentGw = currentGwTransfers.length;
+        freeTransfers = Math.max(0, freeTransfers - usedInCurrentGw);
+        
+        // Cap at maximum 5 free transfers
+        return Math.min(freeTransfers, 5);
+      },
+
+      getTransferCost: (gameweek: number) => {
+        const freeTransfers = get().getFreeTransfersForGameweek(gameweek);
+        return freeTransfers === Infinity || freeTransfers > 0 ? 0 : 4;
+      },
     }),
     {
       name: 'eef-toolkit-storage',
@@ -408,6 +503,8 @@ export const usePlanner = () => useStore(state => ({
   availableBudget: state.availableBudget,
   transferCount: state.transferCount,
   currentGameweek: state.currentGameweek,
+  freeTransfers: state.freeTransfers,
+  transferHistory: state.transferHistory,
   setFormation: state.setFormation,
   addPlayer: state.addPlayer,
   removePlayer: state.removePlayer,
@@ -422,4 +519,7 @@ export const usePlanner = () => useStore(state => ({
   previousGameweek: state.previousGameweek,
   validateSquad: state.validateSquad,
   autoPickTeam: state.autoPickTeam,
+  makeTransfer: state.makeTransfer,
+  getFreeTransfersForGameweek: state.getFreeTransfersForGameweek,
+  getTransferCost: state.getTransferCost,
 })); 

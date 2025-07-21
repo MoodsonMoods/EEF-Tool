@@ -219,7 +219,7 @@ export class FDRCalculator {
     return { attack: attackFDR, defence: defenceFDR };
   }
 
-  private static calculateAttackFDR(
+  static calculateAttackFDR(
     teamXGFor: number,
     opponentXGConceded: number,
     isHome: boolean

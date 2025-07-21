@@ -10,6 +10,7 @@ EEF Toolkit 2.0 provides FPL-level analytical and planning capabilities for the 
 
 ### Core Features (v1)
 - **Squad Planner**: Formation visualization with drag & drop, scenario save/load
+- **Free Transfers System**: Complete transfer management with free transfers, saved transfers, and point penalties
 - **FDR Analysis**: Attack & defence difficulty ratings with horizon rankings
 - **Price Change Monitor**: Track price movements and ownership changes
 - **Player Analytics**: Enriched player tables with FBref integration
@@ -20,6 +21,25 @@ EEF Toolkit 2.0 provides FPL-level analytical and planning capabilities for the 
 - **Normalization**: Internal API with enriched player data
 - **Static Delivery**: Pre-computed metrics for optimal performance
 - **Data Integrity**: Manifest validation and freshness checks
+
+### Free Transfers System
+The squad planner now includes a comprehensive free transfers system that mirrors real EEF rules:
+
+- **Unlimited Pre-Season**: Unlimited free transfers before gameweek 1 starts
+- **Free Transfers**: 1 free transfer per gameweek (starting from gameweek 2)
+- **Transfer Banking**: Save unused transfers for future gameweeks (max 5)
+- **Point Penalties**: Extra transfers cost 4 points each
+- **Transfer History**: Track all transfers with costs and timestamps
+- **Gameweek Navigation**: Free transfers update automatically when changing gameweeks
+- **Visual Indicators**: Clear display of available transfers and transfer costs
+
+**Transfer Rules:**
+- Users have unlimited free transfers before gameweek 1 starts
+- Users get their first free transfer after gameweek 1 ends (before gameweek 2 starts)
+- Unused transfers can be saved and carried forward
+- Maximum of 5 free transfers can be accumulated
+- Each extra transfer beyond free transfers costs 4 points
+- Transfer history is maintained across all gameweeks
 
 ## 🏗️ Architecture
 

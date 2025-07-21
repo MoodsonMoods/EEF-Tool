@@ -16,13 +16,7 @@ export class FormationValidator {
     const errors: string[] = [];
     const warnings: string[] = [];
 
-    // Check total players
-    const total = formation.gk + formation.def + formation.mid + formation.fwd;
-    if (total !== this.TOTAL_PLAYERS) {
-      errors.push(`Formation must have exactly ${this.TOTAL_PLAYERS} players, got ${total}`);
-    }
-
-    // Check starting XI
+    // Check starting XI (formation represents starting XI only)
     const startingXI = formation.gk + formation.def + formation.mid + formation.fwd;
     if (startingXI !== this.STARTING_XI) {
       errors.push(`Starting XI must have exactly ${this.STARTING_XI} players, got ${startingXI}`);
@@ -45,17 +39,8 @@ export class FormationValidator {
       errors.push(`Forwards must be between ${this.POSITION_LIMITS.fwd.min}-${this.POSITION_LIMITS.fwd.max}, got ${formation.fwd}`);
     }
 
-    // Check bench composition
-    const benchSize = this.TOTAL_PLAYERS - this.STARTING_XI;
-    if (benchSize !== this.BENCH_SIZE) {
-      errors.push(`Bench must have exactly ${this.BENCH_SIZE} players`);
-    }
-
-    // Check bench has at least one goalkeeper
-    const benchGK = Math.max(0, formation.gk - 1); // Assuming 1 GK in starting XI
-    if (benchGK < 1) {
-      errors.push('Bench must include at least one goalkeeper');
-    }
+    // Note: Bench composition is handled separately in validateSquad
+    // Formation only represents starting XI
 
     return {
       isValid: errors.length === 0,
@@ -81,6 +66,39 @@ export class FormationValidator {
 
     if (bench.length !== this.BENCH_SIZE) {
       errors.push(`Bench must have exactly ${this.BENCH_SIZE} players, got ${bench.length}`);
+    }
+
+    // Check total squad composition (2 GK, 5 DEF, 5 MID, 3 FWD)
+    const gkCount = squad.filter(player => player.position === 'GK').length;
+    const defCount = squad.filter(player => player.position === 'DEF').length;
+    const midCount = squad.filter(player => player.position === 'MID').length;
+    const fwdCount = squad.filter(player => player.position === 'FWD').length;
+
+    if (gkCount !== 2) {
+      errors.push(`Squad must have exactly 2 goalkeepers, got ${gkCount}`);
+    }
+
+    if (defCount !== 5) {
+      errors.push(`Squad must have exactly 5 defenders, got ${defCount}`);
+    }
+
+    if (midCount !== 5) {
+      errors.push(`Squad must have exactly 5 midfielders, got ${midCount}`);
+    }
+
+    if (fwdCount !== 3) {
+      errors.push(`Squad must have exactly 3 forwards, got ${fwdCount}`);
+    }
+
+    // Check bench composition (1 GK + 3 outfield players)
+    const benchGK = bench.filter(player => player.position === 'GK').length;
+    if (benchGK !== 1) {
+      errors.push('Bench must have exactly 1 goalkeeper');
+    }
+
+    const benchOutfield = bench.filter(player => player.position !== 'GK').length;
+    if (benchOutfield !== 3) {
+      errors.push('Bench must have exactly 3 outfield players');
     }
 
     // Check captain and vice-captain
@@ -146,7 +164,7 @@ export class FormationValidator {
   static getValidFormations(): Formation[] {
     const formations: Formation[] = [];
     
-    // Generate all valid formations
+    // Generate all valid starting XI formations
     for (let def = 3; def <= 5; def++) {
       for (let mid = 3; mid <= 5; mid++) {
         for (let fwd = 1; fwd <= 3; fwd++) {

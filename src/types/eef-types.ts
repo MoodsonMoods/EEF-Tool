@@ -294,4 +294,15 @@ export interface PlannerState {
   availableBudget: number;
   transferCount: number;
   currentGameweek: number;
+  freeTransfers: number;
+  transferHistory: TransferRecord[];
+}
+
+export interface TransferRecord {
+  id: string;
+  gameweek: number;
+  playerOut: number;
+  playerIn: number;
+  timestamp: string;
+  cost: number; // 0 for free transfer, 4 for extra transfer
 }
