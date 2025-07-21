@@ -90,16 +90,16 @@ export async function GET(request: NextRequest) {
     }
 
     // Sort by attack FDR (easiest first) and assign ranks
-    const sortedAttackFDR = [...fdrData].sort((a, b) => a.attackFDR - b.attackFDR);
-    sortedAttackFDR.forEach((team, index) => {
-      team.rank = index + 1;
-    });
+    const sortedAttackFDR = [...fdrData].sort((a, b) => a.attackFDR - b.attackFDR).map((team, index) => ({
+      ...team,
+      rank: index + 1
+    }));
 
     // Sort by defence FDR (easiest first) and assign ranks
-    const sortedDefenceFDR = [...fdrData].sort((a, b) => a.defenceFDR - b.defenceFDR);
-    sortedDefenceFDR.forEach((team, index) => {
-      team.rank = index + 1;
-    });
+    const sortedDefenceFDR = [...fdrData].sort((a, b) => a.defenceFDR - b.defenceFDR).map((team, index) => ({
+      ...team,
+      rank: index + 1
+    }));
 
     const response: FDRResponse = {
       success: true,

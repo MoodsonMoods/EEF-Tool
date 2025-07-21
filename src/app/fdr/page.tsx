@@ -16,6 +16,14 @@ interface TeamFDRData {
   rank: number;
 }
 
+type SortField = 'rank' | 'difficulty' | 'xGFor' | 'xGConceded';
+type SortDirection = 'asc' | 'desc';
+
+interface SortConfig {
+  field: SortField;
+  direction: SortDirection;
+}
+
 export default function FDRPage() {
   const { language } = usePreferences();
   const [attackFDR, setAttackFDR] = useState<TeamFDRData[]>([]);
@@ -23,6 +31,8 @@ export default function FDRPage() {
   const [loading, setLoading] = useState(true);
   const [selectedHorizon, setSelectedHorizon] = useState(5);
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const [attackSort, setAttackSort] = useState<SortConfig>({ field: 'rank', direction: 'asc' });
+  const [defenceSort, setDefenceSort] = useState<SortConfig>({ field: 'rank', direction: 'asc' });
 
   useEffect(() => {
     calculateFDR();
@@ -55,6 +65,57 @@ export default function FDRPage() {
 
   const getFDRLabel = (fdr: number) => {
     return FDRCalculator.getFDRLabel(fdr);
+  };
+
+  const sortData = (data: TeamFDRData[], sortConfig: SortConfig, fdrType: 'attack' | 'defence'): TeamFDRData[] => {
+    return [...data].sort((a, b) => {
+      let aValue: number;
+      let bValue: number;
+
+      switch (sortConfig.field) {
+        case 'rank':
+          aValue = a.rank;
+          bValue = b.rank;
+          break;
+        case 'difficulty':
+          aValue = fdrType === 'attack' ? a.attackFDR : a.defenceFDR;
+          bValue = fdrType === 'attack' ? b.attackFDR : b.defenceFDR;
+          break;
+        case 'xGFor':
+          aValue = a.xGFor;
+          bValue = b.xGFor;
+          break;
+        case 'xGConceded':
+          aValue = a.xGConceded;
+          bValue = b.xGConceded;
+          break;
+        default:
+          return 0;
+      }
+
+      if (sortConfig.direction === 'asc') {
+        return aValue - bValue;
+      } else {
+        return bValue - aValue;
+      }
+    });
+  };
+
+  const handleSort = (field: SortField, fdrType: 'attack' | 'defence') => {
+    const currentSort = fdrType === 'attack' ? attackSort : defenceSort;
+    const setSort = fdrType === 'attack' ? setAttackSort : setDefenceSort;
+
+    setSort({
+      field,
+      direction: currentSort.field === field && currentSort.direction === 'asc' ? 'desc' : 'asc'
+    });
+  };
+
+  const getSortIcon = (field: SortField, currentSort: SortConfig) => {
+    if (currentSort.field !== field) {
+      return '↕️';
+    }
+    return currentSort.direction === 'asc' ? '↑' : '↓';
   };
 
   const labels = {
@@ -160,25 +221,49 @@ export default function FDRPage() {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Rank
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        onClick={() => handleSort('rank', 'attack')}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>Rank</span>
+                          <span className="text-xs">{getSortIcon('rank', attackSort)}</span>
+                        </div>
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         {labels.team[language]}
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {labels.difficulty[language]}
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        onClick={() => handleSort('difficulty', 'attack')}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>{labels.difficulty[language]}</span>
+                          <span className="text-xs">{getSortIcon('difficulty', attackSort)}</span>
+                        </div>
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {labels.xGFor[language]}
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        onClick={() => handleSort('xGFor', 'attack')}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>{labels.xGFor[language]}</span>
+                          <span className="text-xs">{getSortIcon('xGFor', attackSort)}</span>
+                        </div>
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {labels.xGConceded[language]}
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        onClick={() => handleSort('xGConceded', 'attack')}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>{labels.xGConceded[language]}</span>
+                          <span className="text-xs">{getSortIcon('xGConceded', attackSort)}</span>
+                        </div>
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {attackFDR.map((team, index) => (
+                    {sortData(attackFDR, attackSort, 'attack').map((team, index) => (
                       <tr key={team.teamId} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {team.rank}
@@ -213,25 +298,49 @@ export default function FDRPage() {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Rank
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        onClick={() => handleSort('rank', 'defence')}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>Rank</span>
+                          <span className="text-xs">{getSortIcon('rank', defenceSort)}</span>
+                        </div>
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         {labels.team[language]}
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {labels.difficulty[language]}
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        onClick={() => handleSort('difficulty', 'defence')}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>{labels.difficulty[language]}</span>
+                          <span className="text-xs">{getSortIcon('difficulty', defenceSort)}</span>
+                        </div>
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {labels.xGFor[language]}
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        onClick={() => handleSort('xGFor', 'defence')}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>{labels.xGFor[language]}</span>
+                          <span className="text-xs">{getSortIcon('xGFor', defenceSort)}</span>
+                        </div>
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {labels.xGConceded[language]}
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        onClick={() => handleSort('xGConceded', 'defence')}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>{labels.xGConceded[language]}</span>
+                          <span className="text-xs">{getSortIcon('xGConceded', defenceSort)}</span>
+                        </div>
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {defenceFDR.map((team, index) => (
+                    {sortData(defenceFDR, defenceSort, 'defence').map((team, index) => (
                       <tr key={team.teamId} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {team.rank}
@@ -265,7 +374,7 @@ export default function FDRPage() {
                   {labels.attackTitle[language]}
                 </h2>
                 <div className="grid grid-cols-1 gap-3">
-                  {attackFDR.map((team) => (
+                  {sortData(attackFDR, attackSort, 'attack').map((team) => (
                     <TeamFDRCard
                       key={team.teamId}
                       team={team}
@@ -282,7 +391,7 @@ export default function FDRPage() {
                   {labels.defenceTitle[language]}
                 </h2>
                 <div className="grid grid-cols-1 gap-3">
-                  {defenceFDR.map((team) => (
+                  {sortData(defenceFDR, defenceSort, 'defence').map((team) => (
                     <TeamFDRCard
                       key={team.teamId}
                       team={team}
