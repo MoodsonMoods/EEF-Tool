@@ -16,6 +16,25 @@ interface TeamFDRData {
   rank: number;
 }
 
+interface TeamSchedule {
+  teamId: number;
+  teamName: string;
+  fixtures: Array<{
+    fixtureId: number;
+    event: number;
+    kickoffTime: string;
+    opponentId: number;
+    opponentName: string;
+    isHome: boolean;
+    opponentAttackFDR: number;
+    opponentDefenceFDR: number;
+  }>;
+  averageAttackFDR: number;
+  averageDefenceFDR: number;
+  attackFDRRank: number;
+  defenceFDRRank: number;
+}
+
 type SortField = 'rank' | 'difficulty' | 'xGFor' | 'xGConceded';
 type SortDirection = 'asc' | 'desc';
 
@@ -28,11 +47,14 @@ export default function FDRPage() {
   const { language } = usePreferences();
   const [attackFDR, setAttackFDR] = useState<TeamFDRData[]>([]);
   const [defenceFDR, setDefenceFDR] = useState<TeamFDRData[]>([]);
+  const [teamSchedules, setTeamSchedules] = useState<TeamSchedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedHorizon, setSelectedHorizon] = useState(5);
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const [activeTab, setActiveTab] = useState<'fdr' | 'schedules'>('fdr');
   const [attackSort, setAttackSort] = useState<SortConfig>({ field: 'rank', direction: 'asc' });
   const [defenceSort, setDefenceSort] = useState<SortConfig>({ field: 'rank', direction: 'asc' });
+  const [schedulesSort, setSchedulesSort] = useState<'attack' | 'defence'>('attack');
 
   useEffect(() => {
     calculateFDR();
@@ -52,6 +74,16 @@ export default function FDRPage() {
 
       setAttackFDR(fdrData.data.attack);
       setDefenceFDR(fdrData.data.defence);
+
+      // Fetch team schedules from API
+      const schedulesResponse = await fetch(`/api/schedules?horizon=${selectedHorizon}`);
+      const schedulesData = await schedulesResponse.json();
+      
+      if (!schedulesData.success) {
+        throw new Error('Failed to fetch schedules data');
+      }
+
+      setTeamSchedules(schedulesData.data.schedules);
     } catch (error) {
       console.error('Error calculating FDR:', error);
     } finally {
@@ -118,6 +150,16 @@ export default function FDRPage() {
     return currentSort.direction === 'asc' ? '↑' : '↓';
   };
 
+  const formatKickoffTime = (kickoffTime: string) => {
+    const date = new Date(kickoffTime);
+    return date.toLocaleDateString('en-GB', { 
+      day: '2-digit', 
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   const labels = {
     title: { en: 'Fixture Difficulty Rating (FDR)', nl: 'Wedstrijd Moeilijkheidsgraad (FDR)' },
     subtitle: { en: 'Based on 2024-2025 season xG and xGC data', nl: 'Gebaseerd op 2024-2025 seizoen xG en xGC data' },
@@ -129,6 +171,15 @@ export default function FDRPage() {
     xGConceded: { en: 'xG Conceded', nl: 'xG Tegen' },
     horizon: { en: 'Horizon', nl: 'Horizon' },
     loading: { en: 'Loading FDR data...', nl: 'FDR data laden...' },
+    schedules: { en: 'Team Schedules', nl: 'Team Schema\'s' },
+    fdr: { en: 'FDR Ratings', nl: 'FDR Beoordelingen' },
+    averageAttackFDR: { en: 'Avg Attack FDR', nl: 'Gem Aanval FDR' },
+    averageDefenceFDR: { en: 'Avg Defence FDR', nl: 'Gem Verdediging FDR' },
+    upcomingFixtures: { en: 'Upcoming Fixtures', nl: 'Aankomende Wedstrijden' },
+    opponent: { en: 'Opponent', nl: 'Tegenstander' },
+    gameweek: { en: 'GW', nl: 'GW' },
+    home: { en: 'H', nl: 'T' },
+    away: { en: 'A', nl: 'U' },
   };
 
   if (loading) {
@@ -183,34 +234,65 @@ export default function FDRPage() {
               </select>
             </div>
             
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setViewMode('table')}
-                className={`px-3 py-2 text-sm font-medium rounded-md ${
-                  viewMode === 'table'
-                    ? 'bg-primary-100 text-primary-700 border border-primary-300'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                Table
-              </button>
-              <button
-                onClick={() => setViewMode('cards')}
-                className={`px-3 py-2 text-sm font-medium rounded-md ${
-                  viewMode === 'cards'
-                    ? 'bg-primary-100 text-primary-700 border border-primary-300'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                Cards
-              </button>
-            </div>
+            {activeTab === 'fdr' && (
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`px-3 py-2 text-sm font-medium rounded-md ${
+                    viewMode === 'table'
+                      ? 'bg-primary-100 text-primary-700 border border-primary-300'
+                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  Table
+                </button>
+                <button
+                  onClick={() => setViewMode('cards')}
+                  className={`px-3 py-2 text-sm font-medium rounded-md ${
+                    viewMode === 'cards'
+                      ? 'bg-primary-100 text-primary-700 border border-primary-300'
+                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  Cards
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* FDR Content */}
+        {/* Tab Navigation */}
+        <div className="px-4 sm:px-0 mb-6">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('fdr')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'fdr'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                {labels.fdr[language]}
+              </button>
+              <button
+                onClick={() => setActiveTab('schedules')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'schedules'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                {labels.schedules[language]}
+              </button>
+            </nav>
+          </div>
+        </div>
+
+        {/* Content */}
         <div className="px-4 sm:px-0">
-          {viewMode === 'table' ? (
+          {activeTab === 'fdr' ? (
+            viewMode === 'table' ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Attack FDR */}
             <div className="card">
@@ -400,6 +482,126 @@ export default function FDRPage() {
                     />
                   ))}
                 </div>
+              </div>
+            </div>
+          )
+          ) : (
+            /* Team Schedules Section */
+            <div className="card">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {labels.upcomingFixtures[language]}
+                </h2>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600">Sort by:</span>
+                  <button
+                    onClick={() => setSchedulesSort('attack')}
+                    className={`px-3 py-1 text-sm font-medium rounded-md ${
+                      schedulesSort === 'attack'
+                        ? 'bg-primary-100 text-primary-700 border border-primary-300'
+                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    Attack FDR
+                  </button>
+                  <button
+                    onClick={() => setSchedulesSort('defence')}
+                    className={`px-3 py-1 text-sm font-medium rounded-md ${
+                      schedulesSort === 'defence'
+                        ? 'bg-primary-100 text-primary-700 border border-primary-300'
+                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    Defence FDR
+                  </button>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {labels.team[language]}
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {labels.averageAttackFDR[language]}
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {labels.averageDefenceFDR[language]}
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {labels.upcomingFixtures[language]}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {teamSchedules
+                      .sort((a, b) => {
+                        if (schedulesSort === 'attack') {
+                          return a.averageAttackFDR - b.averageAttackFDR;
+                        } else {
+                          return a.averageDefenceFDR - b.averageDefenceFDR;
+                        }
+                      })
+                      .map((schedule, index) => (
+                      <tr key={schedule.teamId} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {schedule.teamName}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center space-x-2">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getFDRColorClass(Math.round(schedule.averageAttackFDR))}`}>
+                              {getFDRLabel(Math.round(schedule.averageAttackFDR))}
+                            </span>
+                            <span className="text-sm text-gray-600">
+                              {schedule.averageAttackFDR.toFixed(1)} (Rank {schedule.attackFDRRank})
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center space-x-2">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getFDRColorClass(Math.round(schedule.averageDefenceFDR))}`}>
+                              {getFDRLabel(Math.round(schedule.averageDefenceFDR))}
+                            </span>
+                            <span className="text-sm text-gray-600">
+                              {schedule.averageDefenceFDR.toFixed(1)} (Rank {schedule.defenceFDRRank})
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          <div className="space-y-1">
+                            {schedule.fixtures.length === 0 ? (
+                              <span className="text-xs text-gray-500">No upcoming fixtures</span>
+                            ) : (
+                              schedule.fixtures.slice(0, Math.max(5, selectedHorizon)).map((fixture) => (
+                               <div key={fixture.fixtureId} className="flex items-center space-x-2">
+                                 <span className="text-xs text-gray-500">
+                                   {labels.gameweek[language]} {fixture.event}
+                                 </span>
+                                 <span className="text-xs font-medium">
+                                   {fixture.isHome ? labels.home[language] : labels.away[language]}
+                                 </span>
+                                 <span className="text-sm">
+                                   {fixture.opponentName}
+                                 </span>
+                                 <span className="text-xs text-gray-500">
+                                   {formatKickoffTime(fixture.kickoffTime)}
+                                 </span>
+                                 <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${getFDRColorClass(fixture.opponentAttackFDR)}`}>
+                                   A:{fixture.opponentAttackFDR}
+                                 </span>
+                                 <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${getFDRColorClass(fixture.opponentDefenceFDR)}`}>
+                                   D:{fixture.opponentDefenceFDR}
+                                 </span>
+                               </div>
+                             ))
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
