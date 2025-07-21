@@ -1,0 +1,30 @@
+{
+  "shortPlay": 1,
+  "longPlay": 2,
+  "goalsScored": {
+    "1": 10,
+    "2": 6,
+    "3": 5,
+    "4": 4
+  },
+  "assists": 3,
+  "cleanSheets": {
+    "1": 4,
+    "2": 4,
+    "3": 1,
+    "4": 0
+  },
+  "penaltiesMissed": -2,
+  "goalsConceded": {
+    "1": -1,
+    "2": -1,
+    "3": 0,
+    "4": 0
+  },
+  "yellowCards": -1,
+  "redCards": -3,
+  "saves": 1,
+  "penaltiesSaved": 5,
+  "ownGoals": -2,
+  "bonus": 1
+}

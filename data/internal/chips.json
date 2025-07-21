@@ -1,0 +1,72 @@
+[
+  {
+    "id": 1,
+    "name": "wildcard",
+    "number": 1,
+    "start_event": 2,
+    "stop_event": 17,
+    "chip_type": "transfer",
+    "overrides": {
+      "rules": {},
+      "scoring": {},
+      "element_types": [],
+      "pick_multiplier": null
+    }
+  },
+  {
+    "id": 2,
+    "name": "wildcard",
+    "number": 1,
+    "start_event": 18,
+    "stop_event": 34,
+    "chip_type": "transfer",
+    "overrides": {
+      "rules": {},
+      "scoring": {},
+      "element_types": [],
+      "pick_multiplier": null
+    }
+  },
+  {
+    "id": 3,
+    "name": "2capt",
+    "number": 1,
+    "start_event": 1,
+    "stop_event": 34,
+    "chip_type": "team",
+    "overrides": {
+      "rules": {},
+      "scoring": {},
+      "element_types": [],
+      "pick_multiplier": null
+    }
+  },
+  {
+    "id": 4,
+    "name": "frush",
+    "number": 1,
+    "start_event": 1,
+    "stop_event": 34,
+    "chip_type": "team",
+    "overrides": {
+      "rules": {},
+      "scoring": {},
+      "element_types": [],
+      "pick_multiplier": null
+    }
+  },
+  {
+    "id": 5,
+    "name": "rich",
+    "number": 1,
+    "start_event": 2,
+    "stop_event": 34,
+    "chip_type": "transfer",
+    "overrides": {
+      "rules": {},
+      "scoring": {},
+      "element_types": [],
+      "pick_multiplier": null
+    }
+  }
+]

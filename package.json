@@ -1,0 +1,40 @@
+{
+  "name": "eef-tool-2.0",
+  "version": "1.0.0",
+  "description": "ESPN Eredivisie Fantasy (EEF) Toolkit - Advanced analytics and planning tool",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "ingest": "node scripts/ingest.js",
+    "normalize": "node scripts/normalize.js",
+    "generate-types": "node scripts/generate-types.js"
+  },
+  "dependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^15.0.0",
+    "json-schema-to-typescript": "^2.0.0",
+    "next": "^15.0.0",
+    "postcss": "^8.5.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.0.0",
+    "zustand": "^4.5.0"
+  },
+  "keywords": [
+    "fantasy-football",
+    "eredivisie",
+    "analytics",
+    "planning"
+  ],
+  "author": "",
+  "license": "ISC"
+}

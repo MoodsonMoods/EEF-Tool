@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0.0",
+  "dataVersion": "2025-07-20",
+  "timestamp": "2025-07-20T11:45:11.822Z",
+  "source": {
+    "rawDataDir": "134345",
+    "rawDataTimestamp": "2025-07-20/134345"
+  },
+  "counts": {
+    "players": 505,
+    "teams": 18,
+    "events": 34,
+    "elementTypes": 4
+  },
+  "gameSettings": {
+    "squadSize": 15,
+    "squadPlay": 11,
+    "totalSpend": 1000,
+    "teamLimit": 3
+  }
+}

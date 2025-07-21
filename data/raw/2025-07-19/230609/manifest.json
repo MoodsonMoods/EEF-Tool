@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0.0",
+  "dataVersion": "2025-07-19",
+  "timestamp": "2025-07-19T21:06:14.725Z",
+  "ingestion": {
+    "startTime": "2025-07-19T21:06:14.725Z",
+    "endTime": "2025-07-19T21:06:14.725Z",
+    "results": [
+      {
+        "name": "bootstrap-static",
+        "success": false,
+        "error": "Failed to parse JSON: Unexpected token 'R', \"Redirecting\r\n\" is not valid JSON",
+        "timestamp": "2025-07-19T21:06:09.733Z"
+      },
+      {
+        "name": "fixtures",
+        "success": false,
+        "error": "Failed to parse JSON: Unexpected token 'R', \"Redirecting\r\n\" is not valid JSON",
+        "timestamp": "2025-07-19T21:06:11.037Z"
+      },
+      {
+        "name": "teams",
+        "success": false,
+        "error": "Failed to parse JSON: Unexpected token 'R', \"Redirecting\r\n\" is not valid JSON",
+        "timestamp": "2025-07-19T21:06:12.413Z"
+      },
+      {
+        "name": "price-history",
+        "success": false,
+        "error": "Failed to parse JSON: Unexpected token 'R', \"Redirecting\r\n\" is not valid JSON",
+        "timestamp": "2025-07-19T21:06:13.723Z"
+      }
+    ]
+  },
+  "counts": {
+    "players": 0,
+    "fixtures": 0,
+    "teams": 0
+  },
+  "hashes": {
+    "players": "",
+    "fixtures": "",
+    "fdr": ""
+  }
+}

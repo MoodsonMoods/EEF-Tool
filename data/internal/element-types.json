@@ -1,0 +1,54 @@
+[
+  {
+    "id": 1,
+    "singularName": "Keeper",
+    "singularNameShort": "KEE",
+    "pluralName": "Keepers",
+    "pluralNameShort": "GKP",
+    "squadSelect": 2,
+    "squadMinSelect": null,
+    "squadMaxSelect": null,
+    "squadMinPlay": 1,
+    "squadMaxPlay": 1,
+    "elementCount": 67
+  },
+  {
+    "id": 2,
+    "singularName": "Verdediger",
+    "singularNameShort": "VER",
+    "pluralName": "Verdedigers",
+    "pluralNameShort": "DEF",
+    "squadSelect": 5,
+    "squadMinSelect": null,
+    "squadMaxSelect": null,
+    "squadMinPlay": 3,
+    "squadMaxPlay": 5,
+    "elementCount": 153
+  },
+  {
+    "id": 3,
+    "singularName": "Middenvelder",
+    "singularNameShort": "MID",
+    "pluralName": "Middenvelders",
+    "pluralNameShort": "MID",
+    "squadSelect": 5,
+    "squadMinSelect": null,
+    "squadMaxSelect": null,
+    "squadMinPlay": 2,
+    "squadMaxPlay": 5,
+    "elementCount": 226
+  },
+  {
+    "id": 4,
+    "singularName": "Spits",
+    "singularNameShort": "SPI",
+    "pluralName": "Spitsen",
+    "pluralNameShort": "FWD",
+    "squadSelect": 3,
+    "squadMinSelect": null,
+    "squadMaxSelect": null,
+    "squadMinPlay": 1,
+    "squadMaxPlay": 3,
+    "elementCount": 59
+  }
+]

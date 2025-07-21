@@ -1,0 +1,23 @@
+{
+  "leagueJoinPrivateMax": 20,
+  "leagueJoinPublicMax": 3,
+  "leagueMaxSizePublicClassic": 20,
+  "leagueMaxSizePublicH2h": 16,
+  "leagueMaxSizePrivateH2h": 16,
+  "leaguePrefixPublic": "ESPN Eredivisie",
+  "leaguePointsH2hWin": 3,
+  "leaguePointsH2hLose": 0,
+  "leaguePointsH2hDraw": 1,
+  "elementSellAtPurchasePrice": false,
+  "squadSquadplay": 11,
+  "squadSquadsize": 15,
+  "squadTeamLimit": 3,
+  "squadTotalSpend": 1000,
+  "uiCurrencyMultiplier": 10,
+  "statsFormDays": 30,
+  "sysViceCaptainEnabled": true,
+  "transfersCap": 20,
+  "transfersSellOnFee": 0.5,
+  "maxExtraFreeTransfers": 4,
+  "timezone": "UTC"
+}
