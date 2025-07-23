@@ -3,7 +3,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
         // Load team stats from data file
-        const teamStatsPath = join(process.cwd(), 'data', 'internal', 'team-stats-2024-25-csv-import.json');
+        const teamStatsPath = join(process.cwd(), 'data', 'internal', 'team-stats-2024-25.json');
         const teamStatsData = JSON.parse(readFileSync(teamStatsPath, 'utf-8'));
         const TEAM_STATS_2024_25 = teamStatsData.teams;
 
@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
       },
       meta: {
         season: teamStatsData.season,
-        dataSource: teamStatsData.dataSource,
+        dataSource: 'Team Stats 2024-25',
         totalTeams: fdrData.length,
       },
     };

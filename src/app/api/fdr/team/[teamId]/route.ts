@@ -3,7 +3,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 // Load team stats from data file
-const teamStatsPath = join(process.cwd(), 'data', 'internal', 'team-stats-2024-25-csv-import.json');
+const teamStatsPath = join(process.cwd(), 'data', 'internal', 'team-stats-2024-25.json');
 const teamStatsData = JSON.parse(readFileSync(teamStatsPath, 'utf-8'));
 const TEAM_STATS_2024_25 = teamStatsData.teams;
 
@@ -85,26 +85,26 @@ export async function GET(
       }, { status: 404 });
     }
 
-    // Map team names from main API to CSV data names
+    // Map team names from main API to team stats data names
     const teamNameMapping: { [key: string]: string } = {
       'Ajax': 'Ajax',
-      'PSV': 'PSV Eindhoven',
+      'PSV': 'PSV',
       'Feyenoord': 'Feyenoord',
-      'AZ': 'AZ Alkmaar',
-      'FC Twente': 'Twente',
-      'FC Utrecht': 'Utrecht',
-      'FC Groningen': 'Groningen',
-      'Vitesse': 'Vitesse',
-      'sc Heerenveen': 'Heerenveen',
-      'Sparta Rotterdam': 'Sparta R\'dam',
+      'AZ': 'AZ',
+      'FC Twente': 'FC Twente',
+      'FC Utrecht': 'FC Utrecht',
+      'FC Groningen': 'FC Groningen',
+      'sc Heerenveen': 'sc Heerenveen',
+      'Sparta Rotterdam': 'Sparta Rotterdam',
       'Go Ahead Eagles': 'Go Ahead Eagles',
       'Fortuna Sittard': 'Fortuna Sittard',
-      'RKC Waalwijk': 'RKC Waalwijk',
-      'N.E.C.': 'NEC',
+      'N.E.C.': 'N.E.C.',
       'Heracles Almelo': 'Heracles Almelo',
-      'Willem II': 'Willem II',
-      'Almere City': 'Almere City',
-      'Roda JC Kerkrade': 'Roda JC'
+      'PEC Zwolle': 'PEC Zwolle',
+      'Excelsior': 'Excelsior',
+      'NAC Breda': 'NAC Breda',
+      'FC Volendam': 'FC Volendam',
+      'Telstar': 'Telstar'
     };
 
     const csvTeamName = teamNameMapping[team.name];
@@ -157,7 +157,7 @@ export async function GET(
       data: teamFDRData,
       meta: {
         season: '2024-25',
-        dataSource: 'CSV Import'
+        dataSource: 'Team Stats 2024-25'
       }
     };
 
