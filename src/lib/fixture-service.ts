@@ -26,26 +26,36 @@ export class FixtureService {
   private static teams: Team[] = [];
   private static events: Event[] = [];
   private static initialized = false;
+  private static fdrCache: Map<number, { defenceFDR: number; attackFDR: number }> = new Map();
 
   static async initialize() {
     if (this.initialized) return;
     
     try {
       // Fetch real fixture data from API
-      const [fixturesResponse, teamsResponse, eventsResponse] = await Promise.all([
+      const [fixturesResponse, eventsResponse] = await Promise.all([
         fetch('/api/fixtures/'),
-        fetch('/api/teams/'),
         fetch('/api/events/')
       ]);
       
       const fixturesData = await fixturesResponse.json();
-      const teamsData = await teamsResponse.json();
       const eventsData = await eventsResponse.json();
 
-      if (fixturesData.success && teamsData.success && eventsData.success) {
-        this.fixtures = this.parseFixtures(fixturesData.data, teamsData.data, eventsData.data);
-        this.teams = teamsData.data;
+      // Load teams data from internal file to match fixture team IDs
+      const teamsData = await this.loadInternalTeamsData();
+
+      if (fixturesData.success && eventsData.success && teamsData) {
+        this.fixtures = this.parseFixtures(fixturesData.data, teamsData, eventsData.data);
+        this.teams = teamsData;
         this.events = eventsData.data;
+        
+        // Try to pre-load FDR data, but don't fail if it doesn't work
+        try {
+          await this.preloadFDRData();
+        } catch (error) {
+          console.warn('Failed to preload FDR data, continuing without it:', error);
+        }
+        
         this.initialized = true;
         console.log(`FixtureService initialized with ${this.fixtures.length} real fixtures`);
         console.log('Sample parsed fixtures:', this.fixtures.slice(0, 3));
@@ -53,12 +63,59 @@ export class FixtureService {
         console.log('Events loaded:', this.events.length);
       } else {
         console.warn('Failed to fetch real fixture data, falling back to mock fixtures');
-        this.generateMockFixtures(teamsData.data || [], eventsData.data || []);
+        await this.generateMockFixtures(teamsData || [], eventsData.data || []);
       }
     } catch (error) {
       console.error('Failed to initialize FixtureService with real data:', error);
       // Fall back to mock fixtures if real data is not available
-      this.generateMockFixtures([], []);
+      await this.generateMockFixtures([], []);
+    }
+  }
+
+  private static async loadInternalTeamsData(): Promise<any[]> {
+    try {
+      const response = await fetch('/api/teams/internal/');
+      const data = await response.json();
+      return data.success ? data.data : [];
+    } catch (error) {
+      console.error('Failed to load internal teams data:', error);
+      return [];
+    }
+  }
+
+  private static async preloadFDRData(): Promise<void> {
+    try {
+      console.log('Pre-loading FDR data for all teams...');
+      
+      // Get unique team IDs from fixtures
+      const teamIds = new Set<number>();
+      this.fixtures.forEach(fixture => {
+        teamIds.add(fixture.homeTeam);
+        teamIds.add(fixture.awayTeam);
+      });
+
+      // Fetch FDR data for all teams in parallel, but don't fail if some fail
+      const fdrPromises = Array.from(teamIds).map(async (teamId) => {
+        try {
+          const response = await fetch(`/api/fdr/team/${teamId}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.data) {
+              this.fdrCache.set(teamId, {
+                defenceFDR: data.data.defenceFDR,
+                attackFDR: data.data.attackFDR
+              });
+            }
+          }
+        } catch (error) {
+          // Silently ignore errors for teams without FDR data
+        }
+      });
+
+      await Promise.all(fdrPromises);
+      console.log(`FDR cache populated with ${this.fdrCache.size} teams`);
+    } catch (error) {
+      console.error('Error pre-loading FDR data:', error);
     }
   }
 
@@ -83,11 +140,15 @@ export class FixtureService {
     return team?.name || `Team ${teamId}`;
   }
 
-  private static generateMockFixtures(teams: Team[], events: Event[]) {
+  private static async generateMockFixtures(teams: Team[], events: Event[]) {
     // Fallback to mock fixtures if real data is not available
     this.fixtures = this.generateFixtures(teams, events);
     this.teams = teams;
     this.events = events;
+    
+    // Pre-load FDR data even for mock fixtures
+    await this.preloadFDRData();
+    
     this.initialized = true;
     console.log(`FixtureService initialized with ${this.fixtures.length} mock fixtures`);
   }
@@ -147,15 +208,15 @@ export class FixtureService {
     ) || null;
   }
 
-  static getCurrentFixtureForPlayer(playerTeamId: number, currentGameweek: number): PlayerFixture | null {
+  static async getCurrentFixtureForPlayer(playerTeamId: number, currentGameweek: number, position?: 'GK' | 'DEF' | 'MID' | 'FWD'): Promise<PlayerFixture | null> {
     const fixture = this.getCurrentFixtureForTeam(playerTeamId, currentGameweek);
     if (!fixture) return null;
 
     const isHome = fixture.homeTeam === playerTeamId;
     const opponent = isHome ? fixture.awayTeamName : fixture.homeTeamName;
     
-    // Mock difficulty calculation (in a real app, this would use FDR data)
-    const difficulty = this.calculateFixtureDifficulty(playerTeamId, fixture);
+    // Get real FDR-based difficulty calculation based on position
+    const difficulty = await this.calculateFixtureDifficulty(playerTeamId, fixture, position);
     
     return {
       gameweek: fixture.gameweek,
@@ -166,11 +227,125 @@ export class FixtureService {
     };
   }
 
-  private static calculateFixtureDifficulty(teamId: number, fixture: Fixture): PlayerFixture['difficulty'] {
-    // Mock difficulty calculation - in reality this would use team strength, form, etc.
+  // Synchronous version for when FDR data is cached
+  static getCurrentFixtureForPlayerSync(playerTeamId: number, currentGameweek: number, position?: 'GK' | 'DEF' | 'MID' | 'FWD'): PlayerFixture | null {
+    const fixture = this.getCurrentFixtureForTeam(playerTeamId, currentGameweek);
+    if (!fixture) return null;
+
+    const isHome = fixture.homeTeam === playerTeamId;
+    const opponent = isHome ? fixture.awayTeamName : fixture.homeTeamName;
+    
+    // Get difficulty from cache if available
+    const difficulty = this.getCachedFixtureDifficulty(playerTeamId, fixture, position);
+    
+    return {
+      gameweek: fixture.gameweek,
+      opponent,
+      isHome,
+      kickoffTime: fixture.kickoffTime,
+      difficulty,
+    };
+  }
+
+  private static getCachedFixtureDifficulty(teamId: number, fixture: Fixture, position?: 'GK' | 'DEF' | 'MID' | 'FWD'): PlayerFixture['difficulty'] {
+    const opponentTeamId = fixture.homeTeam === teamId ? fixture.awayTeam : fixture.homeTeam;
+    const cachedFDR = this.fdrCache.get(opponentTeamId);
+    
+    if (cachedFDR) {
+      let fdrNumber: number;
+      
+      if (position === 'GK' || position === 'DEF') {
+        fdrNumber = cachedFDR.defenceFDR;
+      } else {
+        fdrNumber = cachedFDR.attackFDR;
+      }
+      
+      return this.fdrToDifficulty(fdrNumber);
+    }
+    
+    // Fallback to mock difficulty if not cached
+    return this.getMockDifficulty(teamId, fixture);
+  }
+
+  private static async calculateFixtureDifficulty(teamId: number, fixture: Fixture, position?: 'GK' | 'DEF' | 'MID' | 'FWD'): Promise<PlayerFixture['difficulty']> {
+    try {
+      // Get opponent team ID
+      const opponentTeamId = fixture.homeTeam === teamId ? fixture.awayTeam : fixture.homeTeam;
+      
+      // Check if FDR data is cached
+      const cachedFDR = this.fdrCache.get(opponentTeamId);
+      
+      if (cachedFDR) {
+        // Use cached FDR data
+        let fdrNumber: number;
+        
+        if (position === 'GK' || position === 'DEF') {
+          // Use defence FDR for goalkeepers and defenders
+          fdrNumber = cachedFDR.defenceFDR;
+        } else {
+          // Use attack FDR for midfielders and forwards
+          fdrNumber = cachedFDR.attackFDR;
+        }
+        
+        return this.fdrToDifficulty(fdrNumber);
+      }
+      
+      // Fallback: try to fetch FDR data if not cached
+      const response = await fetch(`/api/fdr/team/${opponentTeamId}`);
+      
+      if (!response.ok) {
+        console.warn(`Failed to fetch FDR data for team ${opponentTeamId}, falling back to mock difficulty`);
+        return this.getMockDifficulty(teamId, fixture);
+      }
+      
+      const data = await response.json();
+      
+      if (!data.success || !data.data) {
+        console.warn(`Invalid FDR data for team ${opponentTeamId}, falling back to mock difficulty`);
+        return this.getMockDifficulty(teamId, fixture);
+      }
+      
+      // Cache the FDR data for future use
+      this.fdrCache.set(opponentTeamId, {
+        defenceFDR: data.data.defenceFDR,
+        attackFDR: data.data.attackFDR
+      });
+      
+      // Convert FDR number to difficulty string based on position
+      let fdrNumber: number;
+      
+      if (position === 'GK' || position === 'DEF') {
+        // Use defence FDR for goalkeepers and defenders
+        fdrNumber = data.data.defenceFDR;
+      } else {
+        // Use attack FDR for midfielders and forwards
+        fdrNumber = data.data.attackFDR;
+      }
+      
+      return this.fdrToDifficulty(fdrNumber);
+      
+    } catch (error) {
+      console.error('Error calculating fixture difficulty with FDR:', error);
+      return this.getMockDifficulty(teamId, fixture);
+    }
+  }
+
+  private static getMockDifficulty(teamId: number, fixture: Fixture): PlayerFixture['difficulty'] {
+    // Fallback mock difficulty calculation
     const difficulties: PlayerFixture['difficulty'][] = ['VERY_EASY', 'EASY', 'MEDIUM', 'HARD', 'VERY_HARD'];
     const randomIndex = (teamId + fixture.gameweek) % difficulties.length;
     return difficulties[randomIndex];
+  }
+
+  private static fdrToDifficulty(fdrNumber: number): PlayerFixture['difficulty'] {
+    switch (fdrNumber) {
+      case 1: return 'VERY_EASY';
+      case 2: return 'EASY';
+      case 3: return 'MEDIUM';
+      case 4: return 'HARD';
+      case 5: return 'VERY_HARD';
+      default: return 'MEDIUM';
+    }
   }
 
   static getCurrentGameweek(): number {
@@ -193,11 +368,24 @@ export class FixtureService {
   }
 
   static getTotalGameweeks(): number {
+    // Always fall back to events length if fixtures are not available
+    if (this.fixtures.length === 0 || !this.initialized) {
+      return this.events.length;
+    }
     const maxGameweek = Math.max(...this.fixtures.map(f => f.gameweek));
-    return maxGameweek;
+    return maxGameweek || this.events.length;
   }
 
   static isInitialized(): boolean {
     return this.initialized;
+  }
+
+  static clearFDRCache(): void {
+    this.fdrCache.clear();
+    console.log('FDR cache cleared');
+  }
+
+  static getFDRCacheSize(): number {
+    return this.fdrCache.size;
   }
 } 

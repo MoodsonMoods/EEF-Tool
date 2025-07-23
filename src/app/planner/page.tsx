@@ -18,6 +18,7 @@ export default function SquadPlanner() {
   const [showPlayerModal, setShowPlayerModal] = useState(false);
   const [selectedPlayerForModal, setSelectedPlayerForModal] = useState<Player | null>(null);
   const [fixtureServiceReady, setFixtureServiceReady] = useState(false);
+  const [playerFixtures, setPlayerFixtures] = useState<{ [playerId: number]: PlayerFixture | null }>({});
 
   const {
     currentFormation,
@@ -53,14 +54,39 @@ export default function SquadPlanner() {
   }, []);
 
   useEffect(() => {
-    // Set the current gameweek based on the events data once it's loaded
-    if (events.length > 0 && fixtureServiceReady && currentGameweek === 1) {
+    // Only set the current gameweek if it is still the default (1)
+    if (
+      events.length > 0 &&
+      fixtureServiceReady &&
+      currentGameweek === 1 // Only set if not already changed by user
+    ) {
       const nextEvent = events.find(event => event.isNext);
-      if (nextEvent) {
+      if (nextEvent && nextEvent.id !== currentGameweek) {
         setCurrentGameweek(nextEvent.id);
       }
     }
-  }, [events, fixtureServiceReady, currentGameweek, setCurrentGameweek]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [events, fixtureServiceReady]);
+
+  // Load fixture data for all players
+  useEffect(() => {
+    const loadPlayerFixtures = async () => {
+      if (!fixtureServiceReady || players.length === 0) return;
+      
+      const newFixtures: { [playerId: number]: PlayerFixture | null } = {};
+      
+      // Load fixtures for all players (both selected and filtered)
+      for (const player of players) {
+        const position = getPositionFromElementType(player.elementType);
+        const fixture = await FixtureService.getCurrentFixtureForPlayer(player.team.id, currentGameweek, position);
+        newFixtures[player.id] = fixture;
+      }
+      
+      setPlayerFixtures(newFixtures);
+    };
+    
+    loadPlayerFixtures();
+  }, [players, currentGameweek, fixtureServiceReady]);
 
   const fetchData = async () => {
     try {
@@ -278,7 +304,7 @@ export default function SquadPlanner() {
     return player?.team.name || 'Unknown';
   };
 
-  const getCurrentFixtureForPlayer = (playerId: number): PlayerFixture | null => {
+  const getCurrentFixtureForPlayer = async (playerId: number): Promise<PlayerFixture | null> => {
     const player = players.find(p => p.id === playerId);
     if (!player) return null;
     
@@ -287,8 +313,14 @@ export default function SquadPlanner() {
       return null;
     }
     
-    const fixture = FixtureService.getCurrentFixtureForPlayer(player.team.id, currentGameweek);
-    return fixture;
+    const position = getPositionFromElementType(player.elementType);
+    
+    // Try synchronous version first (uses cache)
+    const fixture = FixtureService.getCurrentFixtureForPlayerSync(player.team.id, currentGameweek, position);
+    if (fixture) return fixture;
+    
+    // Fallback to async version if cache miss
+    return await FixtureService.getCurrentFixtureForPlayer(player.team.id, currentGameweek, position);
   };
 
   const getCurrentGameweekName = () => {
@@ -297,15 +329,24 @@ export default function SquadPlanner() {
   };
 
   const getTotalGameweeks = () => {
+    // Always use events.length as fallback to ensure navigation works
+    if (fixtureServiceReady && FixtureService.isInitialized()) {
+      return FixtureService.getTotalGameweeks();
+    }
     return events.length;
   };
 
   const canGoToNextGameweek = () => {
-    return currentGameweek < getTotalGameweeks();
+    const total = getTotalGameweeks();
+    const canGo = currentGameweek < total;
+    console.log(`canGoToNextGameweek: current=${currentGameweek}, total=${total}, canGo=${canGo}`);
+    return canGo;
   };
 
   const canGoToPreviousGameweek = () => {
-    return currentGameweek > 1;
+    const canGo = currentGameweek > 1;
+    console.log(`canGoToPreviousGameweek: current=${currentGameweek}, canGo=${canGo}`);
+    return canGo;
   };
 
   const getDifficultyColor = (difficulty: PlayerFixture['difficulty']) => {
@@ -421,7 +462,7 @@ export default function SquadPlanner() {
     const player = getPlayerById(slot.playerId);
     if (!player) return null;
 
-    const currentFixture = getCurrentFixtureForPlayer(slot.playerId);
+    const currentFixture = playerFixtures[slot.playerId];
 
     return (
       <div className="bg-white rounded-lg p-3 border border-gray-200 hover:border-primary-300 transition-colors">
@@ -569,7 +610,10 @@ export default function SquadPlanner() {
           {/* Gameweek Navigation */}
           <div className="mt-4 flex items-center justify-center space-x-4">
             <button
-              onClick={previousGameweek}
+              onClick={() => {
+                console.log('Previous button clicked');
+                previousGameweek();
+              }}
               disabled={!canGoToPreviousGameweek()}
               className={`px-4 py-2 rounded-lg border transition-colors ${
                 canGoToPreviousGameweek()
@@ -586,7 +630,10 @@ export default function SquadPlanner() {
             </div>
             
             <button
-              onClick={nextGameweek}
+              onClick={() => {
+                console.log('Next button clicked');
+                nextGameweek();
+              }}
               disabled={!canGoToNextGameweek()}
               className={`px-4 py-2 rounded-lg border transition-colors ${
                 canGoToNextGameweek()
@@ -933,7 +980,7 @@ export default function SquadPlanner() {
                 {filteredPlayers.slice(0, 50).map((player) => {
                   const isSelected = selectedPlayers.some(slot => slot.playerId === player.id);
                   const position = getPositionFromElementType(player.elementType);
-                  const currentFixture = getCurrentFixtureForPlayer(player.id);
+                  const currentFixture = playerFixtures[player.id];
                   
                   return (
                     <div
@@ -1056,7 +1103,7 @@ export default function SquadPlanner() {
                 
                 return eligiblePlayers.map((player) => {
                   const position = getPositionFromElementType(player.elementType);
-                  const currentFixture = getCurrentFixtureForPlayer(player.id);
+                  const currentFixture = playerFixtures[player.id];
                   const transferCost = getTransferCost(currentGameweek);
                   const playerCost = player.nowCost / 10;
                   

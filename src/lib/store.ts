@@ -240,14 +240,28 @@ export const useStore = create<Store>()(
         currentGameweek: gameweek,
         freeTransfers: state.getFreeTransfersForGameweek(gameweek)
       })),
-      nextGameweek: () => set(state => ({ 
-        currentGameweek: state.currentGameweek + 1,
-        freeTransfers: state.getFreeTransfersForGameweek(state.currentGameweek + 1)
-      })),
-      previousGameweek: () => set(state => ({ 
-        currentGameweek: state.currentGameweek - 1,
-        freeTransfers: state.getFreeTransfersForGameweek(state.currentGameweek - 1)
-      })),
+      nextGameweek: () => {
+        console.log('Store: nextGameweek called');
+        set(state => {
+          const newGameweek = state.currentGameweek + 1;
+          console.log(`Store: Moving from ${state.currentGameweek} to ${newGameweek}`);
+          return {
+            currentGameweek: newGameweek,
+            freeTransfers: state.getFreeTransfersForGameweek(newGameweek)
+          };
+        });
+      },
+      previousGameweek: () => {
+        console.log('Store: previousGameweek called');
+        set(state => {
+          const newGameweek = state.currentGameweek - 1;
+          console.log(`Store: Moving from ${state.currentGameweek} to ${newGameweek}`);
+          return {
+            currentGameweek: newGameweek,
+            freeTransfers: state.getFreeTransfersForGameweek(newGameweek)
+          };
+        });
+      },
 
       autoPickTeam: (players, budget) => {
         const { currentFormation } = get();
@@ -470,6 +484,14 @@ export const useStore = create<Store>()(
         autoSave: state.autoSave,
         scenarios: state.scenarios,
         activeScenarioId: state.activeScenarioId,
+        // Persist planner state as well:
+        currentFormation: state.currentFormation,
+        selectedPlayers: state.selectedPlayers,
+        availableBudget: state.availableBudget,
+        transferCount: state.transferCount,
+        currentGameweek: state.currentGameweek,
+        freeTransfers: state.freeTransfers,
+        transferHistory: state.transferHistory,
       }),
     }
   )
