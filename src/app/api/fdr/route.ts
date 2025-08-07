@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { TeamsResponse, FixturesResponse } from '@/types';
+
+// Configure for static export
+export const dynamic = 'force-static';
 
         // Load team stats from data file
         const teamStatsPath = join(process.cwd(), 'data', 'internal', 'team-stats-2024-25.json');
@@ -58,9 +62,9 @@ function calculateSimpleFDR(xGValue: number, isHome: boolean = false, isAttack: 
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const horizon = parseInt(searchParams.get('horizon') || '5');
-    const gameweek = parseInt(searchParams.get('gameweek') || '1');
+    // Use default parameters for static export
+    const horizon = 5;
+    const startGameweek = 1;
 
     const fdrData: TeamFDRData[] = [];
 

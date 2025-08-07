@@ -11,7 +11,9 @@
     "type-check": "tsc --noEmit",
     "ingest": "node scripts/ingest.js",
     "normalize": "node scripts/normalize.js",
-    "generate-types": "node scripts/generate-types.js"
+    "generate-types": "node scripts/generate-types.js",
+    "update-data": "./scripts/update-data.sh",
+    "deploy": "npm run build && vercel --prod"
   },
   "dependencies": {
     "@types/node": "^22.0.0",

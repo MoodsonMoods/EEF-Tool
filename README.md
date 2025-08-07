@@ -11,7 +11,7 @@ EEF Toolkit 2.0 provides FPL-level analytical and planning capabilities for the 
 ### Core Features (v1)
 - **Squad Planner**: Formation visualization with drag & drop, scenario save/load
 - **Free Transfers System**: Complete transfer management with free transfers, saved transfers, and point penalties
-- **FDR Analysis**: Attack & defence difficulty ratings with horizon rankings
+- **FDR Analysis**: Attack & defence difficulty ratings with horizon rankings and flexible start gameweek selection
 - **Price Change Monitor**: Track price movements and ownership changes
 - **Player Analytics**: Enriched player tables with FBref integration
 - **Localization**: Dutch and English language support
@@ -185,6 +185,8 @@ Computes fixture difficulty ratings using xG data:
 - Attack FDR: How easy it is to score against opponent
 - Defence FDR: How easy it is to keep clean sheet
 - Horizon rankings: Aggregated difficulty over N gameweeks
+- Flexible start gameweek: Analyze fixtures from any chosen gameweek (1-38)
+- User preferences: Start gameweek selection is persisted in localStorage
 
 #### State Management
 Zustand store with three slices:
@@ -197,6 +199,10 @@ Zustand store with three slices:
 ### ESPN EEF Endpoints
 - `bootstrap-static`: Players, teams, game settings
 - `fixtures`: Match data and results
+
+### Internal API Endpoints
+- `/api/fdr?horizon=5&startGameweek=1`: FDR data with configurable horizon and start gameweek
+- `/api/schedules?horizon=5&startGameweek=1`: Team schedules with configurable horizon and start gameweek
 - `teams`: Team statistics
 - `price-history`: Player price and ownership data
 

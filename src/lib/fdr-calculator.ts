@@ -143,7 +143,7 @@ export class FDRCalculator {
     currentGameweek: number
   ): { attack: FDRData[]; defence: FDRData[] } {
     const teamStats = this.getTeamStats(fbrefData);
-    const teams = Object.keys(teamStats);
+    const teams = Object.keys(teamStats).map(Number);
     const attackFDR: FDRData[] = [];
     const defenceFDR: FDRData[] = [];
 
@@ -259,28 +259,28 @@ export class FDRCalculator {
     return this.DIFFICULTY_WEIGHTS.VERY_HARD;
   }
 
-  private static getTeamStats(fbrefData: PlayerFBref[]): Record<string, { xGFor: number; xGConceded: number }> {
-    const teamStats: Record<string, { xGFor: number; xGConceded: number }> = {};
+  private static getTeamStats(fbrefData: PlayerFBref[]): Record<number, { xGFor: number; xGConceded: number }> {
+    const teamStats: Record<number, { xGFor: number; xGConceded: number }> = {};
 
     for (const player of fbrefData) {
-      if (!teamStats[player.team]) {
-        teamStats[player.team] = { xGFor: 0, xGConceded: 0 };
+      if (!teamStats[player.teamId]) {
+        teamStats[player.teamId] = { xGFor: 0, xGConceded: 0 };
       }
 
-      teamStats[player.team].xGFor += player.xGFor;
-      teamStats[player.team].xGConceded += player.xGConceded;
+      teamStats[player.teamId].xGFor += player.xGFor;
+      teamStats[player.teamId].xGConceded += player.xGConceded;
     }
 
     // Normalize by number of players per team
-    const playerCounts: Record<string, number> = {};
+    const playerCounts: Record<number, number> = {};
     for (const player of fbrefData) {
-      playerCounts[player.team] = (playerCounts[player.team] || 0) + 1;
+      playerCounts[player.teamId] = (playerCounts[player.teamId] || 0) + 1;
     }
 
     for (const team in teamStats) {
-      const count = playerCounts[team] || 1;
-      teamStats[team].xGFor /= count;
-      teamStats[team].xGConceded /= count;
+      const count = playerCounts[parseInt(team)] || 1;
+      teamStats[parseInt(team)].xGFor /= count;
+      teamStats[parseInt(team)].xGConceded /= count;
     }
 
     return teamStats;

@@ -306,3 +306,50 @@ export interface TransferRecord {
   timestamp: string;
   cost: number; // 0 for free transfer, 4 for extra transfer
 }
+
+// User Team Types
+export interface UserTeamPick {
+  element: number;
+  position: number;
+  is_captain: boolean;
+  is_vice_captain: boolean;
+  multiplier: number;
+}
+
+export interface UserTeamChip {
+  name: string;
+  time: string;
+  event: number;
+}
+
+export interface UserTeamTransfers {
+  cost: number;
+  status: string;
+  limit: number;
+  made: number;
+  bank: number;
+  value: number;
+}
+
+export interface UserTeamData {
+  picks: UserTeamPick[];
+  chips: UserTeamChip[];
+  transfers: UserTeamTransfers;
+  league: number;
+  entry: number;
+  event: number;
+  points: number;
+  total_points: number;
+  rank: number;
+  rank_sort: number;
+  overall_rank: number;
+  bank: number;
+  value: number;
+  event_transfers: number;
+  event_transfers_cost: number;
+  points_on_bench: number;
+}
+
+export interface UserTeamResponse extends ApiResponse<UserTeamData | null> {
+  error?: string;
+}

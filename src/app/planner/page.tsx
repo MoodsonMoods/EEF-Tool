@@ -4,9 +4,18 @@ import { useState, useEffect } from 'react';
 import NavBar from '@/components/NavBar';
 import { usePlanner, useScenarios } from '@/lib/store';
 import ScenarioList from '@/components/ScenarioList';
+import FormationSelector from '@/components/FormationSelector';
+import PlayerList from '@/components/PlayerList';
+import PlayerCard from '@/components/PlayerCard';
+import SquadSummary from '@/components/SquadSummary';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import { PlayerCardSkeleton, StatsSkeleton } from '@/components/LoadingSkeleton';
+import { usePlayerFixtures } from '@/hooks/usePlayerFixtures';
 import { Player, Position, SquadSlot, Event, Team } from '@/types';
 import { FormationValidator } from '@/lib/formation-validator';
 import { FixtureService, PlayerFixture } from '@/lib/fixture-service';
+import { getPositionFromElementType } from '@/lib/utils';
+import UserTeamLoader from '@/components/UserTeamLoader';
 
 export default function SquadPlanner() {
   const [players, setPlayers] = useState<Player[]>([]);
@@ -18,7 +27,6 @@ export default function SquadPlanner() {
   const [showPlayerModal, setShowPlayerModal] = useState(false);
   const [selectedPlayerForModal, setSelectedPlayerForModal] = useState<Player | null>(null);
   const [fixtureServiceReady, setFixtureServiceReady] = useState(false);
-  const [playerFixtures, setPlayerFixtures] = useState<{ [playerId: number]: PlayerFixture | null }>({});
 
   const {
     currentFormation,
@@ -37,6 +45,7 @@ export default function SquadPlanner() {
     moveToStartingXI,
     setBudget,
     setTransferCount,
+    clearAllPlayers,
     setCurrentGameweek,
     nextGameweek,
     previousGameweek,
@@ -48,6 +57,9 @@ export default function SquadPlanner() {
   } = usePlanner();
 
   const { addScenario, loadScenario, updateScenario, scenarios, activeScenarioId } = useScenarios();
+
+  // Use custom hook for player fixtures
+  const playerFixtures = usePlayerFixtures(players, currentGameweek, fixtureServiceReady);
 
   useEffect(() => {
     fetchData();
@@ -67,26 +79,6 @@ export default function SquadPlanner() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [events, fixtureServiceReady]);
-
-  // Load fixture data for all players
-  useEffect(() => {
-    const loadPlayerFixtures = async () => {
-      if (!fixtureServiceReady || players.length === 0) return;
-      
-      const newFixtures: { [playerId: number]: PlayerFixture | null } = {};
-      
-      // Load fixtures for all players (both selected and filtered)
-      for (const player of players) {
-        const position = getPositionFromElementType(player.elementType);
-        const fixture = await FixtureService.getCurrentFixtureForPlayer(player.team.id, currentGameweek, position);
-        newFixtures[player.id] = fixture;
-      }
-      
-      setPlayerFixtures(newFixtures);
-    };
-    
-    loadPlayerFixtures();
-  }, [players, currentGameweek, fixtureServiceReady]);
 
   const fetchData = async () => {
     try {
@@ -587,6 +579,26 @@ export default function SquadPlanner() {
               )}
             </div>
             <div className="flex space-x-3">
+              <UserTeamLoader 
+                onLoadTeam={(players, budget) => {
+                  // Clear current selection
+                  clearAllPlayers();
+                  
+                  // Add all players from the loaded team
+                  players.forEach(player => {
+                    addPlayer(player);
+                  });
+                  
+                  // Set the budget
+                  setBudget(budget);
+                  
+                  // Show success message
+                  alert('Team loaded successfully!');
+                }}
+                onError={(error) => {
+                  alert(`Error loading team: ${error}`);
+                }}
+              />
               <button
                 onClick={handleSaveScenario}
                 className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"

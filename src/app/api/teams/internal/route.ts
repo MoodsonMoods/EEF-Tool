@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
+// Configure for static export
+export const dynamic = 'force-static';
+
 export async function GET(request: NextRequest) {
   try {
     const dataPath = join(process.cwd(), 'data', 'internal', 'teams.json');

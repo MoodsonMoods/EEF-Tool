@@ -1,6 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { TeamsResponse, FixturesResponse } from '@/types';
+
+// Configure for static export
+export const dynamic = 'force-static';
+
+// Generate static params for all teams
+export async function generateStaticParams() {
+  try {
+    const teamsPath = join(process.cwd(), 'data', 'internal', 'teams.json');
+    const teamsData = JSON.parse(readFileSync(teamsPath, 'utf-8'));
+    
+    return teamsData.map((team: any) => ({
+      teamId: team.id.toString(),
+    }));
+  } catch (error) {
+    console.error('Error generating static params:', error);
+    return [];
+  }
+}
 
 // Load team stats from data file
 const teamStatsPath = join(process.cwd(), 'data', 'internal', 'team-stats-2024-25.json');
@@ -66,22 +85,15 @@ export async function GET(
       }, { status: 400 });
     }
 
-    // First, get the team name from the main teams API
-    const teamsResponse = await fetch(`${request.nextUrl.origin}/api/teams/`);
-    if (!teamsResponse.ok) {
-      return NextResponse.json({
-        success: false,
-        error: 'Failed to fetch teams data'
-      }, { status: 500 });
-    }
-    
-    const teamsData = await teamsResponse.json();
-    const team = teamsData.data.find((t: any) => t.id === teamId);
+    // Load teams data directly from file system instead of making API call
+    const teamsPath = join(process.cwd(), 'data', 'internal', 'teams.json');
+    const teamsData = JSON.parse(readFileSync(teamsPath, 'utf-8'));
+    const team = teamsData.find((t: any) => t.id === teamId);
     
     if (!team) {
       return NextResponse.json({
         success: false,
-        error: 'Team not found in teams API'
+        error: 'Team not found'
       }, { status: 404 });
     }
 

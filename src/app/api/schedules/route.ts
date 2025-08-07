@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { TeamsResponse, FixturesResponse } from '@/types';
+
+// Configure for static export
+export const dynamic = 'force-static';
 
 interface TeamStats {
   id: number;
@@ -61,8 +65,9 @@ function calculateSimpleFDR(xGValue: number, isAttack: boolean = false): number 
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const horizon = parseInt(searchParams.get('horizon') || '5');
+    // Use default parameters for static export
+    const horizon = 5;
+    const startGameweek = 1;
 
     // Load team stats
     const teamStatsPath = join(process.cwd(), 'data', 'internal', 'team-stats-2024-25-csv-import.json');
@@ -81,9 +86,9 @@ export async function GET(request: NextRequest) {
     const fixturesPath = join(process.cwd(), 'data', 'internal', 'fixtures.json');
     const fixturesData: Fixture[] = JSON.parse(readFileSync(fixturesPath, 'utf-8'));
 
-    // Filter upcoming fixtures (not finished, sorted by kickoff time)
+    // Filter fixtures starting from the specified gameweek
     const upcomingFixtures = fixturesData
-      .filter(fixture => !fixture.finished)
+      .filter(fixture => !fixture.finished && fixture.event >= startGameweek)
       .sort((a, b) => new Date(a.kickoffTime).getTime() - new Date(b.kickoffTime).getTime())
       .slice(0, horizon * 18); // 18 teams, so up to 18 fixtures per gameweek
 
@@ -105,9 +110,10 @@ export async function GET(request: NextRequest) {
 
     // Process fixtures for each team individually to get their next sequential fixtures
     for (const [teamId, schedule] of Array.from(teamSchedules.entries())) {
-      // Find all fixtures where this team is either home or away
+      // Find all fixtures where this team is either home or away, starting from startGameweek
       const teamFixtures = upcomingFixtures.filter(fixture => 
-        fixture.teamH === teamId || fixture.teamA === teamId
+        (fixture.teamH === teamId || fixture.teamA === teamId) &&
+        fixture.event >= startGameweek
       );
       
       // Sort by kickoff time to ensure chronological order
@@ -180,6 +186,7 @@ export async function GET(request: NextRequest) {
       data: {
         schedules: schedulesArray,
         horizon,
+        startGameweek,
         totalTeams: schedulesArray.length
       },
       timestamp: new Date().toISOString(),

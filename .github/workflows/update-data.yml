@@ -1,0 +1,70 @@
+name: Update EEF Data Daily
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC (4 AM CEST)
+    - cron: '0 2 * * *'
+  workflow_dispatch:  # Allow manual trigger
+  push:
+    branches: [ main ]
+    paths:
+      - 'scripts/**'
+      - 'data/**'
+      - '.github/workflows/update-data.yml'
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run data ingestion
+        run: npm run ingest
+        env:
+          # Add any environment variables needed for ESPN API
+          ESPN_LEAGUE_ID: ${{ secrets.ESPN_LEAGUE_ID }}
+          ESPN_SEASON: ${{ secrets.ESPN_SEASON }}
+          
+      - name: Normalize data
+        run: npm run normalize
+        
+      - name: Generate types
+        run: npm run generate-types
+        
+      - name: Build application
+        run: npm run build
+        
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          
+      - name: Create update summary
+        run: |
+          echo "## EEF Tool Data Update - $(date)" >> update-log.md
+          echo "- Data ingested at: $(date)" >> update-log.md
+          echo "- Build completed successfully" >> update-log.md
+          echo "- Deployed to production" >> update-log.md
+          echo "" >> update-log.md
+          
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data/ update-log.md
+          git commit -m "Auto-update data $(date)" || exit 0
+          git push 

@@ -6,7 +6,8 @@ import {
   PlannerState, 
   SquadScenario, 
   SquadSlot, 
-  Formation
+  Formation,
+  Player
 } from '@/types';
 import { FormationValidator } from './formation-validator';
 
@@ -39,11 +40,12 @@ interface PlannerSlice extends PlannerState {
   moveToStartingXI: (playerId: number) => void;
   setBudget: (budget: number) => void;
   setTransferCount: (count: number) => void;
+  clearAllPlayers: () => void;
   setCurrentGameweek: (gameweek: number) => void;
   nextGameweek: () => void;
   previousGameweek: () => void;
   validateSquad: () => { isValid: boolean; errors: string[]; warnings: string[] };
-  autoPickTeam: (players: any[], budget: number) => void;
+  autoPickTeam: (players: Player[], budget: number) => void;
   makeTransfer: (playerOutId: number, playerInId: number) => { success: boolean; cost: number; message: string };
   getFreeTransfersForGameweek: (gameweek: number) => number;
   getTransferCost: (gameweek: number) => number;
@@ -236,15 +238,14 @@ export const useStore = create<Store>()(
 
       setBudget: (budget) => set({ availableBudget: budget }),
       setTransferCount: (count) => set({ transferCount: count }),
+      clearAllPlayers: () => set({ selectedPlayers: [] }),
       setCurrentGameweek: (gameweek) => set(state => ({ 
         currentGameweek: gameweek,
         freeTransfers: state.getFreeTransfersForGameweek(gameweek)
       })),
       nextGameweek: () => {
-        console.log('Store: nextGameweek called');
         set(state => {
           const newGameweek = state.currentGameweek + 1;
-          console.log(`Store: Moving from ${state.currentGameweek} to ${newGameweek}`);
           return {
             currentGameweek: newGameweek,
             freeTransfers: state.getFreeTransfersForGameweek(newGameweek)
@@ -252,10 +253,8 @@ export const useStore = create<Store>()(
         });
       },
       previousGameweek: () => {
-        console.log('Store: previousGameweek called');
         set(state => {
           const newGameweek = state.currentGameweek - 1;
-          console.log(`Store: Moving from ${state.currentGameweek} to ${newGameweek}`);
           return {
             currentGameweek: newGameweek,
             freeTransfers: state.getFreeTransfersForGameweek(newGameweek)
@@ -263,7 +262,7 @@ export const useStore = create<Store>()(
         });
       },
 
-      autoPickTeam: (players, budget) => {
+      autoPickTeam: (players: Player[], budget: number) => {
         const { currentFormation } = get();
         
         // Clear current selection
@@ -536,6 +535,7 @@ export const usePlanner = () => useStore(state => ({
   moveToStartingXI: state.moveToStartingXI,
   setBudget: state.setBudget,
   setTransferCount: state.setTransferCount,
+  clearAllPlayers: state.clearAllPlayers,
   setCurrentGameweek: state.setCurrentGameweek,
   nextGameweek: state.nextGameweek,
   previousGameweek: state.previousGameweek,

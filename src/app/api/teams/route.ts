@@ -3,6 +3,9 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { TeamsResponse } from '@/types';
 
+// Configure for static export
+export const dynamic = 'force-static';
+
 export async function GET(request: NextRequest) {
   try {
     const dataPath = join(process.cwd(), 'data', 'internal', 'teams.json');

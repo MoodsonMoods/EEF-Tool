@@ -3,6 +3,9 @@ import fs from 'fs';
 import path from 'path';
 import { Player, PlayersResponse } from '@/types';
 
+// Configure for static export
+export const dynamic = 'force-static';
+
 // Load normalized data
 function loadNormalizedData() {
   const dataPath = path.join(process.cwd(), 'data', 'internal', 'players.json');
@@ -80,17 +83,23 @@ function sortPlayers(players: Player[], searchParams: URLSearchParams): Player[]
   const sortOrder = searchParams.get('sortOrder') || 'desc';
   
   const sorted = [...players].sort((a, b) => {
-    let aValue: any = a[sortBy as keyof Player];
-    let bValue: any = b[sortBy as keyof Player];
+    const aValue = a[sortBy as keyof Player];
+    const bValue = b[sortBy as keyof Player];
     
     // Handle numeric values
-    if (typeof aValue === 'string' && !isNaN(parseFloat(aValue))) {
-      aValue = parseFloat(aValue);
-      bValue = parseFloat(bValue);
+    const aNum = typeof aValue === 'number' ? aValue : parseFloat(String(aValue));
+    const bNum = typeof bValue === 'number' ? bValue : parseFloat(String(bValue));
+    
+    if (!isNaN(aNum) && !isNaN(bNum)) {
+      return sortOrder === 'asc' ? aNum - bNum : bNum - aNum;
     }
     
-    if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
-    if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+    // Handle string values
+    const aStr = String(aValue).toLowerCase();
+    const bStr = String(bValue).toLowerCase();
+    
+    if (aStr < bStr) return sortOrder === 'asc' ? -1 : 1;
+    if (aStr > bStr) return sortOrder === 'asc' ? 1 : -1;
     return 0;
   });
   
@@ -110,34 +119,20 @@ function paginatePlayers(players: Player[], searchParams: URLSearchParams): Play
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    
     // Load players data
     const players = loadNormalizedData();
     
-    // Apply filters
-    let filteredPlayers = filterPlayers(players, searchParams);
-    
-    // Apply sorting
-    filteredPlayers = sortPlayers(filteredPlayers, searchParams);
-    
-    // Get total count before pagination
-    const totalCount = filteredPlayers.length;
-    
-    // Apply pagination
-    filteredPlayers = paginatePlayers(filteredPlayers, searchParams);
-    
-    // Create response
+    // Create response with all players (no filtering for static export)
     const response: PlayersResponse = {
-      data: filteredPlayers,
+      data: players,
       success: true,
       timestamp: new Date().toISOString(),
       version: '1.0.0',
       meta: {
-        total: totalCount,
-        page: parseInt(searchParams.get('page') || '1'),
-        limit: parseInt(searchParams.get('limit') || '50'),
-        totalPages: Math.ceil(totalCount / parseInt(searchParams.get('limit') || '50'))
+        total: players.length,
+        page: 1,
+        limit: players.length,
+        totalPages: 1
       }
     };
     

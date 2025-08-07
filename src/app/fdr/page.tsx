@@ -5,6 +5,7 @@ import NavBar from '@/components/NavBar';
 import { usePreferences } from '@/lib/store';
 import { FDRCalculator } from '@/lib/fdr-calculator';
 import TeamFDRCard from '@/components/TeamFDRCard';
+import { Event } from '@/types';
 
 interface TeamFDRData {
   teamId: number;
@@ -50,6 +51,8 @@ export default function FDRPage() {
   const [teamSchedules, setTeamSchedules] = useState<TeamSchedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedHorizon, setSelectedHorizon] = useState(5);
+  const [selectedStartGameweek, setSelectedStartGameweek] = useState(1);
+  const [events, setEvents] = useState<Event[]>([]);
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const [activeTab, setActiveTab] = useState<'fdr' | 'schedules'>('fdr');
   const [attackSort, setAttackSort] = useState<SortConfig>({ field: 'rank', direction: 'asc' });
@@ -57,15 +60,45 @@ export default function FDRPage() {
   const [schedulesSort, setSchedulesSort] = useState<'attack' | 'defence'>('attack');
 
   useEffect(() => {
+    // Fetch events to determine current gameweek
+    const fetchEvents = async () => {
+      try {
+        const response = await fetch('/api/events/');
+        const data = await response.json();
+        if (data.success) {
+          setEvents(data.data);
+          
+          // Find the next gameweek (current gameweek)
+          const nextEvent = data.data.find((event: Event) => event.isNext);
+          const currentGameweek = nextEvent ? nextEvent.id : 1;
+          
+          // Load saved preferences from localStorage, or use current gameweek as default
+          const savedStartGameweek = localStorage.getItem('fdrStartGameweek');
+          if (savedStartGameweek) {
+            setSelectedStartGameweek(parseInt(savedStartGameweek));
+          } else {
+            setSelectedStartGameweek(currentGameweek);
+            localStorage.setItem('fdrStartGameweek', currentGameweek.toString());
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching events:', error);
+      }
+    };
+    
+    fetchEvents();
+  }, []);
+
+  useEffect(() => {
     calculateFDR();
-  }, [selectedHorizon]);
+  }, [selectedHorizon, selectedStartGameweek]);
 
   const calculateFDR = async () => {
     setLoading(true);
     
     try {
       // Fetch FDR data from API
-      const fdrResponse = await fetch(`/api/fdr?horizon=${selectedHorizon}`);
+      const fdrResponse = await fetch(`/api/fdr?horizon=${selectedHorizon}&startGameweek=${selectedStartGameweek}`);
       const fdrData = await fdrResponse.json();
       
       if (!fdrData.success) {
@@ -76,7 +109,7 @@ export default function FDRPage() {
       setDefenceFDR(fdrData.data.defence);
 
       // Fetch team schedules from API
-      const schedulesResponse = await fetch(`/api/schedules?horizon=${selectedHorizon}`);
+      const schedulesResponse = await fetch(`/api/schedules?horizon=${selectedHorizon}&startGameweek=${selectedStartGameweek}`);
       const schedulesData = await schedulesResponse.json();
       
       if (!schedulesData.success) {
@@ -150,6 +183,17 @@ export default function FDRPage() {
     return currentSort.direction === 'asc' ? '↑' : '↓';
   };
 
+  const handleStartGameweekChange = (gameweek: number) => {
+    // Validate that start gameweek + horizon doesn't exceed 38
+    if (gameweek + selectedHorizon - 1 > 38) {
+      alert(`Start gameweek ${gameweek} with horizon ${selectedHorizon} would exceed gameweek 38. Please reduce the horizon or choose an earlier start gameweek.`);
+      return;
+    }
+    
+    setSelectedStartGameweek(gameweek);
+    localStorage.setItem('fdrStartGameweek', gameweek.toString());
+  };
+
   const formatKickoffTime = (kickoffTime: string) => {
     const date = new Date(kickoffTime);
     return date.toLocaleDateString('en-GB', { 
@@ -170,6 +214,7 @@ export default function FDRPage() {
     xGFor: { en: 'xG For', nl: 'xG Voor' },
     xGConceded: { en: 'xG Conceded', nl: 'xG Tegen' },
     horizon: { en: 'Horizon', nl: 'Horizon' },
+    startGameweek: { en: 'Start GW', nl: 'Start GW' },
     loading: { en: 'Loading FDR data...', nl: 'FDR data laden...' },
     schedules: { en: 'Team Schedules', nl: 'Team Schema\'s' },
     fdr: { en: 'FDR Ratings', nl: 'FDR Beoordelingen' },
@@ -213,6 +258,9 @@ export default function FDRPage() {
           <p className="mt-2 text-gray-600">
             {labels.subtitle[language]}
           </p>
+          <p className="mt-1 text-sm text-gray-500">
+            Analyzing gameweeks {selectedStartGameweek} to {Math.min(selectedStartGameweek + selectedHorizon - 1, 38)} ({selectedHorizon} gameweeks)
+          </p>
         </div>
 
         {/* Controls */}
@@ -224,13 +272,34 @@ export default function FDRPage() {
               </label>
               <select
                 value={selectedHorizon}
-                onChange={(e) => setSelectedHorizon(Number(e.target.value))}
+                onChange={(e) => {
+                  const newHorizon = Number(e.target.value);
+                  // Validate that start gameweek + horizon doesn't exceed 38
+                  if (selectedStartGameweek + newHorizon - 1 > 38) {
+                    alert(`Start gameweek ${selectedStartGameweek} with horizon ${newHorizon} would exceed gameweek 38. Please reduce the horizon or choose an earlier start gameweek.`);
+                    return;
+                  }
+                  setSelectedHorizon(newHorizon);
+                }}
                 className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               >
                 <option value={3}>3 GW</option>
                 <option value={5}>5 GW</option>
                 <option value={8}>8 GW</option>
                 <option value={10}>10 GW</option>
+              </select>
+              
+              <label className="text-sm font-medium text-gray-700 ml-4">
+                {labels.startGameweek[language]}:
+              </label>
+              <select
+                value={selectedStartGameweek}
+                onChange={(e) => handleStartGameweekChange(Number(e.target.value))}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              >
+                {Array.from({ length: 38 }, (_, i) => i + 1).map(gw => (
+                  <option key={gw} value={gw}>GW {gw}</option>
+                ))}
               </select>
             </div>
             
