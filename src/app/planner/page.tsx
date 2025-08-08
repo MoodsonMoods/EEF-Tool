@@ -27,6 +27,9 @@ export default function SquadPlanner() {
   const [showPlayerModal, setShowPlayerModal] = useState(false);
   const [selectedPlayerForModal, setSelectedPlayerForModal] = useState<Player | null>(null);
   const [fixtureServiceReady, setFixtureServiceReady] = useState(false);
+  const [pendingTransferOut, setPendingTransferOut] = useState<number | null>(null);
+  const [pendingTransferSlot, setPendingTransferSlot] = useState<SquadSlot | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   const {
     currentFormation,
@@ -62,8 +65,15 @@ export default function SquadPlanner() {
   const playerFixtures = usePlayerFixtures(players, currentGameweek, fixtureServiceReady);
 
   useEffect(() => {
-    fetchData();
+    setIsMounted(true);
   }, []);
+
+  useEffect(() => {
+    // Only run on client side after component is mounted
+    if (isMounted) {
+      fetchData();
+    }
+  }, [isMounted]);
 
   useEffect(() => {
     // Only set the current gameweek if it is still the default (1)
@@ -84,12 +94,50 @@ export default function SquadPlanner() {
     try {
       setLoading(true);
       
-      // Fetch players, events, and teams in parallel
-      const [playersResponse, eventsResponse, teamsResponse] = await Promise.all([
-        fetch('/api/players/?limit=1000'),
-        fetch('/api/events/'),
-        fetch('/api/teams/')
-      ]);
+      console.log('Starting to fetch data...');
+      console.log('Window object available:', typeof window !== 'undefined');
+      console.log('Fetch API available:', typeof fetch !== 'undefined');
+      
+      // Add a small delay to ensure server is ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Try using XMLHttpRequest instead of fetch to avoid redirect issues
+      const makeRequest = (url: string): Promise<Response> => {
+        return new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('GET', url, true);
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              // Create a mock Response object
+              const response = {
+                ok: true,
+                status: xhr.status,
+                statusText: xhr.statusText,
+                json: () => Promise.resolve(JSON.parse(xhr.responseText))
+              } as Response;
+              resolve(response);
+            } else {
+              reject(new Error(`Request failed: ${xhr.status} ${xhr.statusText}`));
+            }
+          };
+          xhr.onerror = () => reject(new Error('Network error'));
+          xhr.send();
+        });
+      };
+
+      console.log('Fetching players...');
+      const playersResponse = await makeRequest('/api/players/?limit=1000');
+      console.log('Players response status:', playersResponse.status);
+      
+      console.log('Fetching events...');
+      const eventsResponse = await makeRequest('/api/events/');
+      console.log('Events response status:', eventsResponse.status);
+      
+      console.log('Fetching teams...');
+      const teamsResponse = await makeRequest('/api/teams/');
+      console.log('Teams response status:', teamsResponse.status);
+
+      console.log('Responses received:', { playersResponse, eventsResponse, teamsResponse });
 
       const playersData = await playersResponse.json();
       const eventsData = await eventsResponse.json();
@@ -123,6 +171,13 @@ export default function SquadPlanner() {
       }
     } catch (error) {
       console.error('Failed to fetch data:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+      }
       setLoading(false);
     } finally {
       setLoading(false);
@@ -175,6 +230,40 @@ export default function SquadPlanner() {
   const handleAddPlayer = (player: Player) => {
     const position = getPositionFromElementType(player.elementType);
     
+    // Check if this is a transfer (player was removed and we're adding a new one)
+    if (pendingTransferOut !== null) {
+      // This is a transfer - use the makeTransfer function
+      const result = makeTransfer(pendingTransferOut, player.id);
+      
+      if (result.success) {
+        // Add the new player in the same slot as the removed player
+        if (pendingTransferSlot) {
+          const squadSlot: SquadSlot = {
+            playerId: player.id,
+            position,
+            isCaptain: pendingTransferSlot.isCaptain,
+            isViceCaptain: pendingTransferSlot.isViceCaptain,
+            isOnBench: pendingTransferSlot.isOnBench,
+            benchOrder: pendingTransferSlot.benchOrder
+          };
+          addPlayer(squadSlot);
+        }
+        
+        alert(`${result.message} - Transfer completed!`);
+      } else {
+        alert(`Transfer failed: ${result.message}`);
+        // If transfer failed, don't add the player
+        setPendingTransferOut(null);
+        setPendingTransferSlot(null);
+        return;
+      }
+      
+      setPendingTransferOut(null);
+      setPendingTransferSlot(null);
+      return;
+    }
+    
+    // Regular player addition (not a transfer)
     // Check if we need to add to bench or starting XI
     const isOnBench = selectedPlayers.length >= 11;
     
@@ -198,7 +287,17 @@ export default function SquadPlanner() {
   };
 
   const handleRemovePlayer = (playerId: number) => {
+    // Store the slot information before removing the player
+    const playerSlot = selectedPlayers.find(slot => slot.playerId === playerId);
     removePlayer(playerId);
+    // Set this as a pending transfer out so the next player added will be treated as a transfer
+    setPendingTransferOut(playerId);
+    setPendingTransferSlot(playerSlot || null);
+  };
+
+  const clearPendingTransfer = () => {
+    setPendingTransferOut(null);
+    setPendingTransferSlot(null);
   };
 
   const handleSetCaptain = (playerId: number) => {
@@ -574,6 +673,19 @@ export default function SquadPlanner() {
                 <div className="mt-1">
                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                     Active: {scenarios.find(s => s.id === activeScenarioId)?.name || 'Unknown Scenario'}
+                  </span>
+                </div>
+              )}
+              {pendingTransferOut && (
+                <div className="mt-1">
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    Pending transfer - select a new player or 
+                    <button 
+                      onClick={clearPendingTransfer}
+                      className="ml-1 underline hover:no-underline"
+                    >
+                      cancel
+                    </button>
                   </span>
                 </div>
               )}
@@ -1099,8 +1211,16 @@ export default function SquadPlanner() {
                     getPositionFromElementType(player.elementType) === playerOutPosition &&
                     (player.nowCost / 10) <= availableBudget
                   )
-                  .sort((a, b) => (b.nowCost / 10) - (a.nowCost / 10)) // Sort by price descending
-                  .slice(0, 50);
+                  .sort((a, b) => {
+                    // Sort by value (points per million) first, then by total points
+                    const aValue = a.totalPoints / (a.nowCost / 10);
+                    const bValue = b.totalPoints / (b.nowCost / 10);
+                    if (Math.abs(aValue - bValue) > 0.1) {
+                      return bValue - aValue;
+                    }
+                    return b.totalPoints - a.totalPoints;
+                  })
+                  .slice(0, 100); // Show more players
                 
                 if (eligiblePlayers.length === 0) {
                   return (

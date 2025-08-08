@@ -1,16 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { TeamsResponse, FixturesResponse } from '@/types';
 import { FDRCalculator } from '@/lib/fdr-calculator';
 
 // Configure for static export
 export const dynamic = 'force-static';
 
-// Load team stats from data file
-const teamStatsPath = join(process.cwd(), 'data', 'internal', 'team-stats-2024-25.json');
-const teamStatsData = JSON.parse(readFileSync(teamStatsPath, 'utf-8'));
-const TEAM_STATS_2024_25 = teamStatsData.teams;
+// Generate static params for all horizon values
+export async function generateStaticParams() {
+  return [
+    { horizon: '3' },
+    { horizon: '5' },
+    { horizon: '8' },
+    { horizon: '10' }
+  ];
+}
 
 interface TeamFDRData {
   teamId: number;
@@ -36,17 +40,23 @@ interface FDRResponse {
     season: string;
     dataSource: string;
     totalTeams: number;
+    horizon: number;
   };
 }
 
-
-
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ horizon: string }> }
+) {
   try {
-    // Get parameters from query string
-    const { searchParams } = new URL(request.url);
-    const horizon = parseInt(searchParams.get('horizon') || '5');
-    const startGameweek = parseInt(searchParams.get('startGameweek') || '1');
+    const { horizon: horizonParam } = await params;
+    const horizon = parseInt(horizonParam);
+    const startGameweek = 1; // Default start gameweek
+
+    // Load team stats from data file
+    const teamStatsPath = join(process.cwd(), 'data', 'internal', 'team-stats-2024-25.json');
+    const teamStatsData = JSON.parse(readFileSync(teamStatsPath, 'utf-8'));
+    const TEAM_STATS_2024_25 = teamStatsData.teams;
 
     // Load fixtures data
     const fixturesPath = join(process.cwd(), 'data', 'internal', 'fixtures.json');
@@ -112,6 +122,7 @@ export async function GET(request: NextRequest) {
         season: teamStatsData.season,
         dataSource: 'Team Stats 2024-25',
         totalTeams: sortedAttackFDR.length,
+        horizon: horizon,
       },
     };
 

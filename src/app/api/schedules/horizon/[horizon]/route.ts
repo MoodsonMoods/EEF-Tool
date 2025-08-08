@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { TeamsResponse, FixturesResponse } from '@/types';
 
 // Configure for static export
 export const dynamic = 'force-static';
+
+// Generate static params for all horizon values
+export async function generateStaticParams() {
+  return [
+    { horizon: '3' },
+    { horizon: '5' },
+    { horizon: '8' },
+    { horizon: '10' }
+  ];
+}
 
 interface TeamStats {
   id: number;
@@ -63,12 +72,14 @@ function calculateSimpleFDR(xGValue: number, isAttack: boolean = false): number 
   return fdr;
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ horizon: string }> }
+) {
   try {
-    // Get parameters from query string
-    const { searchParams } = new URL(request.url);
-    const horizon = parseInt(searchParams.get('horizon') || '5');
-    const startGameweek = parseInt(searchParams.get('startGameweek') || '1');
+    const { horizon: horizonParam } = await params;
+    const horizon = parseInt(horizonParam);
+    const startGameweek = 1; // Default start gameweek
 
     // Load team stats
     const teamStatsPath = join(process.cwd(), 'data', 'internal', 'team-stats-2024-25-csv-import.json');
