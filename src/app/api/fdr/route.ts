@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { TeamsResponse, FixturesResponse } from '@/types';
 import { FDRCalculator } from '@/lib/fdr-calculator';
 
 // Configure for static export
