@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { UserTeamResponse, SquadSlot, Position } from '@/types';
+import { SquadSlot, Position } from '@/types';
 import { getPositionFromElementType } from '@/lib/utils';
 
 interface UserTeamLoaderProps {

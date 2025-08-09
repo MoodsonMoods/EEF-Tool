@@ -206,8 +206,7 @@ export interface ApiResponse<T> {
 
 export interface PlayersResponse extends ApiResponse<Player[]> {}
 export interface TeamsResponse extends ApiResponse<Team[]> {}
-
-export interface FixturesResponse extends ApiResponse<any[]> {} // Will be properly typed once we know the fixture structure
+export interface FixturesResponse extends ApiResponse<any[]> {}
 export interface EventsResponse extends ApiResponse<Event[]> {}
 export interface GameSettingsResponse extends ApiResponse<GameSettings> {}
 export interface ScoringRulesResponse extends ApiResponse<ScoringRules> {}
@@ -239,22 +238,12 @@ export interface Formation {
   fwd: number;
 }
 
-export interface SquadPlayer {
-  player: Player;
-  position: Position;
-  isCaptain: boolean;
-  isViceCaptain: boolean;
-  isSubstitute: boolean;
-  substituteOrder?: number;
-}
-
-// Planner-related types
 export interface SquadSlot {
   playerId: number;
   position: Position;
+  isOnBench: boolean;
   isCaptain: boolean;
   isViceCaptain: boolean;
-  isOnBench: boolean;
   benchOrder?: number;
 }
 
@@ -262,6 +251,17 @@ export interface FormationValidation {
   isValid: boolean;
   errors: string[];
   warnings: string[];
+}
+
+export interface PreferencesState {
+  language: 'en' | 'nl';
+  theme: 'light' | 'dark';
+  autoSave: boolean;
+}
+
+export interface ScenariosState {
+  scenarios: SquadScenario[];
+  activeScenarioId: string | null;
 }
 
 export interface SquadScenario {
@@ -277,17 +277,6 @@ export interface SquadScenario {
   updatedAt: string;
 }
 
-export interface PreferencesState {
-  language: 'en' | 'nl';
-  theme: 'light' | 'dark';
-  autoSave: boolean;
-}
-
-export interface ScenariosState {
-  scenarios: SquadScenario[];
-  activeScenarioId: string | null;
-}
-
 export interface PlannerState {
   currentFormation: Formation;
   selectedPlayers: SquadSlot[];
@@ -295,61 +284,14 @@ export interface PlannerState {
   transferCount: number;
   currentGameweek: number;
   freeTransfers: number;
-  transferHistory: TransferRecord[];
+  transferHistory: Array<{ id: string; gameweek: number; playerOut: number; playerIn: number; timestamp: string; cost: number }>;
 }
 
-export interface TransferRecord {
-  id: string;
-  gameweek: number;
-  playerOut: number;
-  playerIn: number;
-  timestamp: string;
-  cost: number; // 0 for free transfer, 4 for extra transfer
-}
-
-// User Team Types
-export interface UserTeamPick {
-  element: number;
-  position: number;
-  is_captain: boolean;
-  is_vice_captain: boolean;
-  multiplier: number;
-}
-
-export interface UserTeamChip {
-  name: string;
-  time: string;
-  event: number;
-}
-
-export interface UserTeamTransfers {
-  cost: number;
-  status: string;
-  limit: number;
-  made: number;
-  bank: number;
-  value: number;
-}
-
-export interface UserTeamData {
-  picks: UserTeamPick[];
-  chips: UserTeamChip[];
-  transfers: UserTeamTransfers;
-  league: number;
-  entry: number;
-  event: number;
-  points: number;
-  total_points: number;
-  rank: number;
-  rank_sort: number;
-  overall_rank: number;
-  bank: number;
-  value: number;
-  event_transfers: number;
-  event_transfers_cost: number;
-  points_on_bench: number;
-}
-
-export interface UserTeamResponse extends ApiResponse<UserTeamData | null> {
-  error?: string;
+export interface SquadPlayer {
+  player: Player;
+  position: Position;
+  isCaptain: boolean;
+  isViceCaptain: boolean;
+  isSubstitute: boolean;
+  substituteOrder?: number;
 }

@@ -45,7 +45,7 @@ interface SortConfig {
 }
 
 export default function FDRPage() {
-  const { language } = usePreferences();
+  const { language } = usePreferences() as { language: 'en' | 'nl' };
   const [attackFDR, setAttackFDR] = useState<TeamFDRData[]>([]);
   const [defenceFDR, setDefenceFDR] = useState<TeamFDRData[]>([]);
   const [teamSchedules, setTeamSchedules] = useState<TeamSchedule[]>([]);

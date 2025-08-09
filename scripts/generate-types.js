@@ -246,10 +246,17 @@ export interface ApiResponse<T> {
   success: boolean;
   timestamp: string;
   version: string;
+  meta?: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
 }
 
 export interface PlayersResponse extends ApiResponse<Player[]> {}
 export interface TeamsResponse extends ApiResponse<Team[]> {}
+export interface FixturesResponse extends ApiResponse<any[]> {}
 export interface EventsResponse extends ApiResponse<Event[]> {}
 export interface GameSettingsResponse extends ApiResponse<GameSettings> {}
 export interface ScoringRulesResponse extends ApiResponse<ScoringRules> {}
