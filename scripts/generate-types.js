@@ -284,19 +284,59 @@ export interface PlayerSort {
 }
 
 export interface Formation {
-  GK: number;
-  DEF: number;
-  MID: number;
-  FWD: number;
+  gk: number;
+  def: number;
+  mid: number;
+  fwd: number;
 }
 
-export interface SquadPlayer {
-  player: Player;
+export interface SquadSlot {
+  playerId: number;
   position: Position;
+  isOnBench: boolean;
   isCaptain: boolean;
   isViceCaptain: boolean;
-  isSubstitute: boolean;
-  substituteOrder?: number;
+  benchOrder?: number;
+}
+
+export interface FormationValidation {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
+export interface PreferencesState {
+  language: 'en' | 'nl';
+  theme: 'light' | 'dark';
+  autoSave: boolean;
+}
+
+export interface SquadScenario {
+  id: string;
+  name: string;
+  description?: string;
+  formation: Formation;
+  startingXI: SquadSlot[];
+  bench: SquadSlot[];
+  budget: number;
+  transferCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ScenariosState {
+  scenarios: SquadScenario[];
+  activeScenarioId: string | null;
+}
+
+export interface PlannerState {
+  currentFormation: Formation;
+  selectedPlayers: SquadSlot[];
+  availableBudget: number;
+  transferCount: number;
+  currentGameweek: number;
+  freeTransfers: number;
+  transferHistory: Array<{ id: string; gameweek: number; playerOut: number; playerIn: number; timestamp: string; cost: number }>;
 }
 `);
 

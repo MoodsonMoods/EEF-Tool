@@ -259,11 +259,6 @@ export interface PreferencesState {
   autoSave: boolean;
 }
 
-export interface ScenariosState {
-  scenarios: SquadScenario[];
-  activeScenarioId: string | null;
-}
-
 export interface SquadScenario {
   id: string;
   name: string;
@@ -277,6 +272,11 @@ export interface SquadScenario {
   updatedAt: string;
 }
 
+export interface ScenariosState {
+  scenarios: SquadScenario[];
+  activeScenarioId: string | null;
+}
+
 export interface PlannerState {
   currentFormation: Formation;
   selectedPlayers: SquadSlot[];
@@ -285,13 +285,4 @@ export interface PlannerState {
   currentGameweek: number;
   freeTransfers: number;
   transferHistory: Array<{ id: string; gameweek: number; playerOut: number; playerIn: number; timestamp: string; cost: number }>;
-}
-
-export interface SquadPlayer {
-  player: Player;
-  position: Position;
-  isCaptain: boolean;
-  isViceCaptain: boolean;
-  isSubstitute: boolean;
-  substituteOrder?: number;
 }
