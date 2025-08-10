@@ -10,20 +10,11 @@ export const dynamic = 'force-dynamic';
 function loadNormalizedData() {
   const dataPath = path.join(process.cwd(), 'data', 'internal', 'players.json');
   
-  console.log('🔍 Loading data from:', dataPath);
-  console.log('🔍 Current working directory:', process.cwd());
-  console.log('🔍 File exists:', fs.existsSync(dataPath));
-  
   if (!fs.existsSync(dataPath)) {
-    console.error('❌ Data file not found at:', dataPath);
-    throw new Error(`Normalized data not found at ${dataPath}. Run normalize first.`);
+    throw new Error('Normalized data not found. Run normalize first.');
   }
   
-  const data = JSON.parse(fs.readFileSync(dataPath, 'utf8')) as Player[];
-  console.log('✅ Loaded', data.length, 'players');
-  console.log('✅ Sample player points:', data.slice(0, 5).map(p => `${p.webName}: ${p.totalPoints}`));
-  
-  return data;
+  return JSON.parse(fs.readFileSync(dataPath, 'utf8')) as Player[];
 }
 
 // Filter players based on query parameters
@@ -128,26 +119,20 @@ function paginatePlayers(players: Player[], searchParams: URLSearchParams): Play
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('🚀 API request received:', request.nextUrl.toString());
-    
     // Load players data
     const players = loadNormalizedData();
     
     // Get query parameters
     const searchParams = request.nextUrl.searchParams;
-    console.log('🔍 Query params:', Object.fromEntries(searchParams.entries()));
     
     // Apply filters
     let filteredPlayers = filterPlayers(players, searchParams);
-    console.log('🔍 After filtering:', filteredPlayers.length, 'players');
     
     // Apply sorting
     filteredPlayers = sortPlayers(filteredPlayers, searchParams);
-    console.log('🔍 After sorting, top 3 players:', filteredPlayers.slice(0, 3).map(p => `${p.webName}: ${p.totalPoints}`));
     
     // Apply pagination
     const paginatedPlayers = paginatePlayers(filteredPlayers, searchParams);
-    console.log('🔍 After pagination:', paginatedPlayers.length, 'players');
     
     // Create response
     const response: PlayersResponse = {
