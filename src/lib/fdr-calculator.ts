@@ -30,18 +30,18 @@ export class FDRCalculator {
 
   private static readonly XG_THRESHOLDS = {
     ATTACK: {
-      VERY_EASY: 2.0, // High xG for
-      EASY: 1.5,
-      MEDIUM: 1.0,
-      HARD: 0.5,
-      VERY_HARD: 0.0, // Low xG for
+      VERY_EASY: 1.8, // High xG for (PSV level)
+      EASY: 1.4,      // Good xG for (Ajax/Feyenoord level)
+      MEDIUM: 1.0,    // Average xG for
+      HARD: 0.7,      // Low xG for
+      VERY_HARD: 0.0, // Very low xG for
     },
     DEFENCE: {
-      VERY_EASY: 0.0, // Low xG conceded
-      EASY: 0.5,
-      MEDIUM: 1.0,
-      HARD: 1.5,
-      VERY_HARD: 2.0, // High xG conceded
+      VERY_EASY: 1.4, // Very good defence (high combined score)
+      EASY: 1.0,      // Good defence
+      MEDIUM: 0.7,    // Average defence
+      HARD: 0.4,      // Poor defence
+      VERY_HARD: 0.0, // Very poor defence
     },
   };
 
@@ -224,12 +224,17 @@ export class FDRCalculator {
     opponentXGConceded: number,
     isHome: boolean
   ): number {
-    const homeAdvantage = isHome ? 0.2 : -0.2;
+    const homeAdvantage = isHome ? 0.15 : -0.15;
     const adjustedXGFor = teamXGFor + homeAdvantage;
     const adjustedXGConceded = opponentXGConceded + (isHome ? -0.1 : 0.1);
 
+    // For attack FDR, we want high team xG and low opponent xG conceded
+    // Normalize the score to be between 0 and 2.0
+    const normalizedTeamXG = Math.min(adjustedXGFor, 2.0);
+    const normalizedOpponentDefence = Math.max(0, 2.0 - adjustedXGConceded);
+    
     // Combine attacking strength and opponent defensive weakness
-    const combinedScore = (adjustedXGFor + (2.0 - adjustedXGConceded)) / 2;
+    const combinedScore = (normalizedTeamXG + normalizedOpponentDefence) / 2;
 
     return this.mapScoreToDifficulty(combinedScore, 'ATTACK');
   }
@@ -239,12 +244,17 @@ export class FDRCalculator {
     opponentXGFor: number,
     isHome: boolean
   ): number {
-    const homeAdvantage = isHome ? -0.2 : 0.2; // Home teams concede less
+    const homeAdvantage = isHome ? -0.15 : 0.15; // Home teams concede less
     const adjustedXGConceded = teamXGConceded + homeAdvantage;
     const adjustedXGFor = opponentXGFor + (isHome ? -0.1 : 0.1);
 
+    // For defence FDR, we want low team xG conceded and low opponent xG for
+    // Normalize the score to be between 0 and 2.0
+    const normalizedTeamDefence = Math.max(0, 2.0 - adjustedXGConceded);
+    const normalizedOpponentAttack = Math.max(0, 2.0 - adjustedXGFor);
+    
     // Combine defensive strength and opponent attacking weakness
-    const combinedScore = (2.0 - adjustedXGConceded + (2.0 - adjustedXGFor)) / 2;
+    const combinedScore = (normalizedTeamDefence + normalizedOpponentAttack) / 2;
 
     return this.mapScoreToDifficulty(combinedScore, 'DEFENCE');
   }
@@ -263,24 +273,12 @@ export class FDRCalculator {
     const teamStats: Record<number, { xGFor: number; xGConceded: number }> = {};
 
     for (const player of fbrefData) {
-      if (!teamStats[player.teamId]) {
-        teamStats[player.teamId] = { xGFor: 0, xGConceded: 0 };
-      }
-
-      teamStats[player.teamId].xGFor += player.xGFor;
-      teamStats[player.teamId].xGConceded += player.xGConceded;
-    }
-
-    // Normalize by number of players per team
-    const playerCounts: Record<number, number> = {};
-    for (const player of fbrefData) {
-      playerCounts[player.teamId] = (playerCounts[player.teamId] || 0) + 1;
-    }
-
-    for (const team in teamStats) {
-      const count = playerCounts[parseInt(team)] || 1;
-      teamStats[parseInt(team)].xGFor /= count;
-      teamStats[parseInt(team)].xGConceded /= count;
+      // Since we're passing team-level data as "player" data, 
+      // we just need to map teamId to the xG values directly
+      teamStats[player.teamId] = {
+        xGFor: player.xGFor,
+        xGConceded: player.xGConceded
+      };
     }
 
     return teamStats;
