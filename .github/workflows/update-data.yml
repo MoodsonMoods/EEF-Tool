@@ -5,12 +5,6 @@ on:
     # Run daily at 2 AM UTC (4 AM CEST)
     - cron: '0 2 * * *'
   workflow_dispatch:  # Allow manual trigger
-  push:
-    branches: [ main ]
-    paths:
-      - 'scripts/**'
-      - 'data/**'
-      - '.github/workflows/update-data.yml'
 
 jobs:
   update-data:
