@@ -30,18 +30,18 @@ export class FDRCalculator {
 
   private static readonly XG_THRESHOLDS = {
     ATTACK: {
-      VERY_EASY: 1.8, // High xG for (PSV level)
-      EASY: 1.4,      // Good xG for (Ajax/Feyenoord level)
-      MEDIUM: 1.0,    // Average xG for
-      HARD: 0.7,      // Low xG for
-      VERY_HARD: 0.0, // Very low xG for
+      VERY_EASY: 0.90,  // Excelsior, Volendam, Telstar (0.875)
+      EASY: 1.25,       // PEC Zwolle, NAC Breda, Heracles Almelo (1.199, 1.196, 1.240)
+      MEDIUM: 1.45,     // Utrecht, Twente, NEC, Sparta, Go Ahead Eagles, FC Groningen, Heerenveen, Fortuna Sittard
+      HARD: 1.53,       // AZ, Ajax (1.428, 1.550)
+      VERY_HARD: 1.60,  // PSV, Feyenoord (1.550, 1.528)
     },
     DEFENCE: {
-      VERY_EASY: 1.4, // Very good defence (high combined score)
-      EASY: 1.0,      // Good defence
-      MEDIUM: 0.7,    // Average defence
-      HARD: 0.4,      // Poor defence
-      VERY_HARD: 0.0, // Very poor defence
+      VERY_EASY: 0.65,  // Telstar, Volendam, Excelsior (lowest scores)
+      EASY: 0.80,       // Heerenveen, Sparta, Heracles, Fortuna, PEC, NAC, Groningen
+      MEDIUM: 0.98,     // Twente, Go Ahead Eagles, Utrecht, NEC
+      HARD: 1.12,       // Ajax, Feyenoord, AZ
+      VERY_HARD: 1.15,  // PSV (highest score)
     },
   };
 
