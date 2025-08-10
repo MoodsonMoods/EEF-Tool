@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
         
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -67,5 +69,7 @@ jobs:
           git config --local user.name "GitHub Action"
           git add data/ update-log.md
           git commit -m "Auto-update data $(date)" || exit 0
-          git push 
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
 # manual trigger test 2025-08-09T19:15:44Z
