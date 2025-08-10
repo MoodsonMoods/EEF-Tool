@@ -125,11 +125,11 @@ export default function FDRPage() {
   };
 
   const getFDRColorClass = (fdr: number) => {
-    return FDRCalculator.getFDRColorClass(fdr);
+    return FDRCalculator.getFDRColorClass(Math.round(fdr));
   };
 
   const getFDRLabel = (fdr: number) => {
-    return FDRCalculator.getFDRLabel(fdr);
+    return FDRCalculator.getFDRLabel(Math.round(fdr));
   };
 
   const sortData = (data: TeamFDRData[], sortConfig: SortConfig, fdrType: 'attack' | 'defence'): TeamFDRData[] => {

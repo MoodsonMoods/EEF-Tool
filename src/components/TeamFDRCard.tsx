@@ -18,8 +18,9 @@ interface TeamFDRCardProps {
 
 export default function TeamFDRCard({ team, type, showDetails = false }: TeamFDRCardProps) {
   const fdr = type === 'attack' ? team.attackFDR : team.defenceFDR;
-  const colorClass = FDRCalculator.getFDRColorClass(fdr);
-  const label = FDRCalculator.getFDRLabel(fdr);
+  const roundedFdr = Math.round(fdr);
+  const colorClass = FDRCalculator.getFDRColorClass(roundedFdr);
+  const label = FDRCalculator.getFDRLabel(roundedFdr);
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow duration-200">
