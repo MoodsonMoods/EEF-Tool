@@ -343,3 +343,4 @@ This project is licensed under the ISC License.
 ---
 
 **Note**: This tool is for educational and personal use. Please respect ESPN's terms of service and rate limits when fetching data. # Manual deployment trigger - Sun Aug 10 11:56:28 CEST 2025
+# Fresh deployment trigger - Sun Aug 10 13:33:01 CEST 2025
