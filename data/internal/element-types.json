@@ -10,7 +10,7 @@
     "squadMaxSelect": null,
     "squadMinPlay": 1,
     "squadMaxPlay": 1,
-    "elementCount": 70
+    "elementCount": 71
   },
   {
     "id": 2,
@@ -23,7 +23,7 @@
     "squadMaxSelect": null,
     "squadMinPlay": 3,
     "squadMaxPlay": 5,
-    "elementCount": 166
+    "elementCount": 170
   },
   {
     "id": 3,
@@ -36,7 +36,7 @@
     "squadMaxSelect": null,
     "squadMinPlay": 2,
     "squadMaxPlay": 5,
-    "elementCount": 232
+    "elementCount": 237
   },
   {
     "id": 4,
@@ -49,6 +49,6 @@
     "squadMaxSelect": null,
     "squadMinPlay": 1,
     "squadMaxPlay": 3,
-    "elementCount": 63
+    "elementCount": 65
   }
 ]

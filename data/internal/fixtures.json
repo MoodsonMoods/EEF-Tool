@@ -656,14 +656,85 @@
     "finished": false,
     "finishedProvisional": false,
     "kickoffTime": "2025-08-10T10:15:00Z",
-    "minutes": 0,
+    "minutes": 57,
     "provisionalStartTime": false,
-    "started": false,
+    "started": true,
     "teamA": 4,
-    "teamAScore": null,
+    "teamAScore": 0,
     "teamH": 12,
-    "teamHScore": null,
-    "stats": []
+    "teamHScore": 1,
+    "stats": [
+      {
+        "identifier": "goals_scored",
+        "a": [],
+        "h": [
+          {
+            "value": 1,
+            "element": 106
+          }
+        ]
+      },
+      {
+        "identifier": "assists",
+        "a": [],
+        "h": [
+          {
+            "value": 1,
+            "element": 381
+          }
+        ]
+      },
+      {
+        "identifier": "penalties_saved",
+        "a": [],
+        "h": []
+      },
+      {
+        "identifier": "penalties_missed",
+        "a": [],
+        "h": []
+      },
+      {
+        "identifier": "yellow_cards",
+        "a": [
+          {
+            "value": 1,
+            "element": 122
+          }
+        ],
+        "h": []
+      },
+      {
+        "identifier": "red_cards",
+        "a": [],
+        "h": []
+      },
+      {
+        "identifier": "saves",
+        "a": [
+          {
+            "value": 1,
+            "element": 115
+          }
+        ],
+        "h": [
+          {
+            "value": 2,
+            "element": 144
+          }
+        ]
+      },
+      {
+        "identifier": "own_goals",
+        "a": [],
+        "h": []
+      },
+      {
+        "identifier": "bonus",
+        "a": [],
+        "h": []
+      }
+    ]
   },
   {
     "id": 7,
