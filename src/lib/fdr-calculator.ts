@@ -31,19 +31,19 @@ export class FDRCalculator {
   private static readonly TEAM_FDR_MAPPING = {
     // Attack FDR mapping based on 2023-2024 season performance
     attack: {
-      1: ['PSV', 'Feyenoord'],           // Very Hard
-      2: ['AZ', 'Ajax'],                 // Hard
+      5: ['PSV', 'Feyenoord'],           // Very Hard
+      4: ['AZ', 'Ajax'],                 // Hard
       3: ['FC Utrecht', 'FC Twente', 'N.E.C.', 'Sparta Rotterdam', 'Go Ahead Eagles', 'FC Groningen', 'sc Heerenveen', 'Fortuna Sittard'], // Medium
-      4: ['PEC Zwolle', 'NAC Breda', 'Heracles Almelo'], // Easy
-      5: ['Excelsior', 'FC Volendam', 'Telstar'] // Very Easy
+      2: ['PEC Zwolle', 'NAC Breda', 'Heracles Almelo'], // Easy
+      1: ['Excelsior', 'FC Volendam', 'Telstar'] // Very Easy
     },
     // Defence FDR mapping based on 2023-2024 season performance
     defence: {
-      1: ['PSV'],                        // Very Hard
-      2: ['Ajax', 'Feyenoord', 'AZ'],    // Hard
+      5: ['PSV'],                        // Very Hard
+      4: ['Ajax', 'Feyenoord', 'AZ'],    // Hard
       3: ['FC Twente', 'Go Ahead Eagles', 'FC Utrecht', 'N.E.C.'], // Medium
-      4: ['sc Heerenveen', 'Sparta Rotterdam', 'Heracles Almelo', 'Fortuna Sittard', 'PEC Zwolle', 'NAC Breda', 'FC Groningen'], // Easy
-      5: ['Telstar', 'FC Volendam', 'Excelsior'] // Very Easy
+      2: ['sc Heerenveen', 'Sparta Rotterdam', 'Heracles Almelo', 'Fortuna Sittard', 'PEC Zwolle', 'NAC Breda', 'FC Groningen'], // Easy
+      1: ['Telstar', 'FC Volendam', 'Excelsior'] // Very Easy
     }
   };
 
