@@ -50,26 +50,32 @@ interface TeamSchedule {
   defenceFDRRank: number;
 }
 
-// FDR calculation function (same as in fdr route)
-function calculateSimpleFDR(xGValue: number, isAttack: boolean = false): number {
-  let fdr: number;
-
-  if (isAttack) {
-    // Attack FDR (based on xGC - how easy it is to score against this team)
-    if (xGValue >= 2.0) fdr = 1; // Very Easy
-    else if (xGValue > 1.5) fdr = 2; // Easy
-    else if (xGValue > 1.2) fdr = 3; // Medium
-    else if (xGValue > 1.0) fdr = 4; // Hard
-    else fdr = 5; // Very Hard
-  } else {
-    // Defence FDR (based on xG - how easy it is to keep clean sheet against this team)
-    if (xGValue < 1.0) fdr = 1; // Very Easy
-    else if (xGValue < 1.2) fdr = 2; // Easy
-    else if (xGValue < 1.5) fdr = 3; // Medium
-    else if (xGValue < 1.8) fdr = 4; // Hard
-    else fdr = 5; // Very Hard
+// Hardcoded FDR mapping (same as in fdr-calculator.ts)
+const TEAM_FDR_MAPPING = {
+  attack: {
+    5: ['PSV', 'Feyenoord'],           // Very Hard
+    4: ['AZ', 'Ajax'],                 // Hard
+    3: ['FC Utrecht', 'FC Twente', 'N.E.C.', 'Sparta Rotterdam', 'Go Ahead Eagles', 'FC Groningen', 'sc Heerenveen', 'Fortuna Sittard'], // Medium
+    2: ['PEC Zwolle', 'NAC Breda', 'Heracles Almelo'], // Easy
+    1: ['Excelsior', 'FC Volendam', 'Telstar'] // Very Easy
+  },
+  defence: {
+    5: ['PSV'],                        // Very Hard
+    4: ['Ajax', 'Feyenoord', 'AZ'],    // Hard
+    3: ['FC Twente', 'Go Ahead Eagles', 'FC Utrecht', 'N.E.C.'], // Medium
+    2: ['sc Heerenveen', 'Sparta Rotterdam', 'Heracles Almelo', 'Fortuna Sittard', 'PEC Zwolle', 'NAC Breda', 'FC Groningen'], // Easy
+    1: ['Telstar', 'FC Volendam', 'Excelsior'] // Very Easy
   }
-  return fdr;
+};
+
+function getTeamFDR(teamName: string, type: 'attack' | 'defence'): number {
+  const mapping = TEAM_FDR_MAPPING[type];
+  for (const [fdrLevel, teams] of Object.entries(mapping)) {
+    if (teams.includes(teamName)) {
+      return parseInt(fdrLevel);
+    }
+  }
+  return 3; // Default to Medium if team not found
 }
 
 export async function GET(
@@ -161,8 +167,8 @@ export async function GET(
           opponentId: opponentId,
           opponentName: opponentName || 'Unknown Team',
           isHome: isHome,
-          opponentAttackFDR: opponentStats ? calculateSimpleFDR(opponentStats.xGConceded, true) : 3, // Default to Medium if no stats
-          opponentDefenceFDR: opponentStats ? calculateSimpleFDR(opponentStats.xGFor, false) : 3 // Default to Medium if no stats
+          opponentAttackFDR: opponentName ? getTeamFDR(opponentName, 'attack') : 3, // Use hardcoded mapping
+          opponentDefenceFDR: opponentName ? getTeamFDR(opponentName, 'defence') : 3 // Use hardcoded mapping
         });
       }
     }
