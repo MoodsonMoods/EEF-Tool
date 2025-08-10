@@ -3,8 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import { Player, PlayersResponse } from '@/types';
 
-// Configure for static export
-export const dynamic = 'force-static';
+// Allow dynamic processing for filtering and sorting
+export const dynamic = 'force-dynamic';
 
 // Load normalized data
 function loadNormalizedData() {
@@ -122,17 +122,29 @@ export async function GET(request: NextRequest) {
     // Load players data
     const players = loadNormalizedData();
     
-    // Create response with all players (no filtering for static export)
+    // Get query parameters
+    const searchParams = request.nextUrl.searchParams;
+    
+    // Apply filters
+    let filteredPlayers = filterPlayers(players, searchParams);
+    
+    // Apply sorting
+    filteredPlayers = sortPlayers(filteredPlayers, searchParams);
+    
+    // Apply pagination
+    const paginatedPlayers = paginatePlayers(filteredPlayers, searchParams);
+    
+    // Create response
     const response: PlayersResponse = {
-      data: players,
+      data: paginatedPlayers,
       success: true,
       timestamp: new Date().toISOString(),
       version: '1.0.0',
       meta: {
-        total: players.length,
-        page: 1,
-        limit: players.length,
-        totalPages: 1
+        total: filteredPlayers.length,
+        page: parseInt(searchParams.get('page') || '1'),
+        limit: parseInt(searchParams.get('limit') || '50'),
+        totalPages: Math.ceil(filteredPlayers.length / parseInt(searchParams.get('limit') || '50'))
       }
     };
     
