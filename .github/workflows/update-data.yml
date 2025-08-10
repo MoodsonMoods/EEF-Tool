@@ -67,6 +67,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+          git pull origin main --rebase
           git add data/ update-log.md
           git commit -m "Auto-update data $(date)" || exit 0
           git push
