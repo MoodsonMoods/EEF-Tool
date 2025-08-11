@@ -57,7 +57,8 @@ export default function SquadPlanner() {
     autoPickTeam,
     makeTransfer,
     getFreeTransfersForGameweek,
-    getTransferCost
+    getTransferCost,
+    getSquadForGameweek
   } = usePlanner();
 
   const { addScenario, loadScenario, updateScenario, scenarios, activeScenarioId } = useScenarios();
@@ -217,15 +218,18 @@ export default function SquadPlanner() {
     return players.find(p => p.id === playerId);
   };
 
-  const getStartingXI = () => selectedPlayers.filter(p => !p.isOnBench);
-  const getBench = () => selectedPlayers.filter(p => p.isOnBench).sort((a, b) => (a.benchOrder || 0) - (b.benchOrder || 0));
+  // Get the squad for the current gameweek (applying transfers chronologically)
+  const getCurrentGameweekSquad = () => getSquadForGameweek(currentGameweek);
+
+  const getStartingXI = () => getCurrentGameweekSquad().filter(p => !p.isOnBench);
+  const getBench = () => getCurrentGameweekSquad().filter(p => p.isOnBench).sort((a, b) => (a.benchOrder || 0) - (b.benchOrder || 0));
 
   const getPlayersByPosition = (position: Position) => {
-    return selectedPlayers.filter(p => p.position === position && !p.isOnBench);
+    return getCurrentGameweekSquad().filter(p => p.position === position && !p.isOnBench);
   };
 
   const getBenchPlayersByPosition = (position: Position) => {
-    return selectedPlayers.filter(p => p.position === position && p.isOnBench);
+    return getCurrentGameweekSquad().filter(p => p.position === position && p.isOnBench);
   };
 
   const handleAddPlayer = (player: Player) => {
@@ -369,14 +373,14 @@ export default function SquadPlanner() {
   };
 
   const getTotalCost = () => {
-    return selectedPlayers.reduce((total, slot) => {
+    return getCurrentGameweekSquad().reduce((total, slot) => {
       const player = getPlayerById(slot.playerId);
       return total + (player?.nowCost || 0);
     }, 0) / 10; // Convert from pence to pounds
   };
 
   const getTotalPoints = () => {
-    return selectedPlayers.reduce((total, slot) => {
+    return getCurrentGameweekSquad().reduce((total, slot) => {
       const player = getPlayerById(slot.playerId);
       return total + (player?.totalPoints || 0);
     }, 0);
@@ -384,7 +388,7 @@ export default function SquadPlanner() {
 
   const getTeamCounts = () => {
     const teamCounts: { [key: number]: number } = {};
-    selectedPlayers.forEach(slot => {
+    getCurrentGameweekSquad().forEach(slot => {
       const player = getPlayerById(slot.playerId);
       if (player) {
         teamCounts[player.team.id] = (teamCounts[player.team.id] || 0) + 1;
@@ -474,8 +478,9 @@ export default function SquadPlanner() {
   const handleSaveScenario = () => {
     const scenarioName = prompt('Enter scenario name:');
     if (scenarioName) {
-      const startingXI = getStartingXI();
-      const bench = getBench();
+      // Save the current squad state (not gameweek-specific)
+      const startingXI = selectedPlayers.filter(p => !p.isOnBench);
+      const bench = selectedPlayers.filter(p => p.isOnBench).sort((a, b) => (a.benchOrder || 0) - (b.benchOrder || 0));
       
       // Check if a scenario with this name already exists
       const existingScenario = scenarios.find(s => s.name === scenarioName);
@@ -537,8 +542,9 @@ export default function SquadPlanner() {
       return;
     }
 
-    const startingXI = getStartingXI();
-    const bench = getBench();
+    // Update with the current squad state (not gameweek-specific)
+    const startingXI = selectedPlayers.filter(p => !p.isOnBench);
+    const bench = selectedPlayers.filter(p => p.isOnBench).sort((a, b) => (a.benchOrder || 0) - (b.benchOrder || 0));
     
     updateScenario(activeScenarioId, {
       formation: currentFormation,
@@ -838,7 +844,7 @@ export default function SquadPlanner() {
                   <div className="text-sm text-green-500">Total Points</div>
                 </div>
                 <div className="bg-purple-50 rounded-lg p-4 text-center">
-                  <div className="text-2xl font-bold text-purple-600">{selectedPlayers.length}/15</div>
+                  <div className="text-2xl font-bold text-purple-600">{getCurrentGameweekSquad().length}/15</div>
                   <div className="text-sm text-purple-500">Players</div>
                 </div>
                 <div className={`rounded-lg p-4 text-center ${
@@ -1060,7 +1066,7 @@ export default function SquadPlanner() {
                 </div>
               )}
 
-              {validation.isValid && selectedPlayers.length === 15 && (
+              {validation.isValid && getCurrentGameweekSquad().length === 15 && (
                 <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
                   <h4 className="font-medium text-green-800 mb-2">✓ Squad is valid!</h4>
                   <p className="text-sm text-green-700">
@@ -1105,7 +1111,7 @@ export default function SquadPlanner() {
               {/* Player List */}
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {filteredPlayers.slice(0, 50).map((player) => {
-                  const isSelected = selectedPlayers.some(slot => slot.playerId === player.id);
+                  const isSelected = getCurrentGameweekSquad().some(slot => slot.playerId === player.id);
                   const position = getPositionFromElementType(player.elementType);
                   const currentFixture = playerFixtures[player.id];
                   
@@ -1223,7 +1229,7 @@ export default function SquadPlanner() {
                 const eligiblePlayers = players
                   .filter(player => 
                     player.id !== selectedPlayerForModal.id && 
-                    !selectedPlayers.some(slot => slot.playerId === player.id) &&
+                    !getCurrentGameweekSquad().some(slot => slot.playerId === player.id) &&
                     getPositionFromElementType(player.elementType) === playerOutPosition &&
                     (player.nowCost / 10) <= availableBudget &&
                     // Add search filter

@@ -49,6 +49,7 @@ interface PlannerSlice extends PlannerState {
   makeTransfer: (playerOutId: number, playerInId: number) => { success: boolean; cost: number; message: string };
   getFreeTransfersForGameweek: (gameweek: number) => number;
   getTransferCost: (gameweek: number) => number;
+  getSquadForGameweek: (gameweek: number) => SquadSlot[];
 }
 
 // Combined store type
@@ -472,6 +473,35 @@ export const useStore = create<Store>()(
         const freeTransfers = get().getFreeTransfersForGameweek(gameweek);
         return freeTransfers === Infinity || freeTransfers > 0 ? 0 : 4;
       },
+
+      // Get the squad as it should appear at a specific gameweek
+      getSquadForGameweek: (gameweek: number) => {
+        const { selectedPlayers, transferHistory } = get();
+        
+        // Start with the current squad
+        let squadAtGameweek = [...selectedPlayers];
+        
+        // Apply transfers that happen after this gameweek in reverse order
+        // to get back to what the squad looked like at this gameweek
+        const transfersAfterGameweek = transferHistory
+          .filter(t => t.gameweek > gameweek)
+          .sort((a, b) => b.gameweek - a.gameweek); // Sort descending to reverse
+        
+        for (const transfer of transfersAfterGameweek) {
+          // Find the slot that currently has the "in" player
+          const slotWithInPlayer = squadAtGameweek.find(slot => slot.playerId === transfer.playerIn);
+          if (slotWithInPlayer) {
+            // Replace the "in" player with the "out" player
+            squadAtGameweek = squadAtGameweek.map(slot => 
+              slot.playerId === transfer.playerIn 
+                ? { ...slot, playerId: transfer.playerOut }
+                : slot
+            );
+          }
+        }
+        
+        return squadAtGameweek;
+      },
     }),
     {
       name: 'eef-toolkit-storage',
@@ -543,4 +573,5 @@ export const usePlanner = () => useStore(state => ({
   makeTransfer: state.makeTransfer,
   getFreeTransfersForGameweek: state.getFreeTransfersForGameweek,
   getTransferCost: state.getTransferCost,
+  getSquadForGameweek: state.getSquadForGameweek,
 })); 
