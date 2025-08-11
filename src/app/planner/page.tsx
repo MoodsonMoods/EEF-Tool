@@ -16,6 +16,7 @@ import { FormationValidator } from '@/lib/formation-validator';
 import { FixtureService, PlayerFixture } from '@/lib/fixture-service';
 import { getPositionFromElementType } from '@/lib/utils';
 import UserTeamLoader from '@/components/UserTeamLoader';
+import PlayerFixturePopup from '@/components/PlayerFixturePopup';
 
 export default function SquadPlanner() {
   const [players, setPlayers] = useState<Player[]>([]);
@@ -31,6 +32,8 @@ export default function SquadPlanner() {
   const [pendingTransferSlot, setPendingTransferSlot] = useState<SquadSlot | null>(null);
   const [isMounted, setIsMounted] = useState(false);
   const [transferModalSearch, setTransferModalSearch] = useState('');
+  const [showFixturePopup, setShowFixturePopup] = useState(false);
+  const [selectedPlayerForFixtures, setSelectedPlayerForFixtures] = useState<Player | null>(null);
 
   const {
     currentFormation,
@@ -536,6 +539,16 @@ export default function SquadPlanner() {
     }
   };
 
+  const handleShowPlayerFixtures = (player: Player) => {
+    setSelectedPlayerForFixtures(player);
+    setShowFixturePopup(true);
+  };
+
+  const handleCloseFixturePopup = () => {
+    setShowFixturePopup(false);
+    setSelectedPlayerForFixtures(null);
+  };
+
   const handleUpdateScenario = () => {
     if (!activeScenarioId) {
       alert('No active scenario to update. Please save a scenario first.');
@@ -644,6 +657,12 @@ export default function SquadPlanner() {
               className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded hover:bg-red-200"
             >
               Remove
+            </button>
+            <button
+              onClick={() => handleShowPlayerFixtures(player)}
+              className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded hover:bg-blue-200"
+            >
+              Fixtures
             </button>
           </div>
         </div>
@@ -1275,40 +1294,56 @@ export default function SquadPlanner() {
                   return (
                     <div
                       key={player.id}
-                      className="p-3 rounded-lg border cursor-pointer transition-colors hover:border-primary-300 bg-white"
-                      onClick={() => handleConfirmTransfer(player.id)}
+                      className="p-3 rounded-lg border transition-colors hover:border-primary-300 bg-white"
                     >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="font-medium text-sm">{player.webName}</div>
-                          <div className="text-xs text-gray-500">
-                            {player.team.name} • {getPositionName(position)}
-                          </div>
-                          {currentFixture && (
-                            <div className="mt-1">
-                              <div className="text-xs text-gray-600">
-                                GW{currentFixture.gameweek}: {currentFixture.isHome ? 'H' : 'A'} vs {currentFixture.opponent}
-                              </div>
-                              <div className={`text-xs px-1 py-0.5 rounded inline-block ${getDifficultyColor(currentFixture.difficulty)}`}>
-                                {getDifficultyText(currentFixture.difficulty)}
-                              </div>
+                      <div 
+                        className="cursor-pointer"
+                        onClick={() => handleConfirmTransfer(player.id)}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="font-medium text-sm">{player.webName}</div>
+                            <div className="text-xs text-gray-500">
+                              {player.team.name} • {getPositionName(position)}
                             </div>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <div className="font-medium text-sm">£{playerCost.toFixed(1)}</div>
-                          <div className="text-xs text-gray-500">{player.totalPoints} pts</div>
-                          <div className={`text-xs px-2 py-1 rounded mt-1 ${
-                            transferCost === 0 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {transferCost === 0 ? 'Free' : `-${transferCost} pts`}
+                            {currentFixture && (
+                              <div className="mt-1">
+                                <div className="text-xs text-gray-600">
+                                  GW{currentFixture.gameweek}: {currentFixture.isHome ? 'H' : 'A'} vs {currentFixture.opponent}
+                                </div>
+                                <div className={`text-xs px-1 py-0.5 rounded inline-block ${getDifficultyColor(currentFixture.difficulty)}`}>
+                                  {getDifficultyText(currentFixture.difficulty)}
+                                </div>
+                              </div>
+                            )}
                           </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            Budget: £{availableBudget.toFixed(1)}
+                          <div className="text-right">
+                            <div className="font-medium text-sm">£{playerCost.toFixed(1)}</div>
+                            <div className="text-xs text-gray-500">{player.totalPoints} pts</div>
+                            <div className={`text-xs px-2 py-1 rounded mt-1 ${
+                              transferCost === 0 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {transferCost === 0 ? 'Free' : `-${transferCost} pts`}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              Budget: £{availableBudget.toFixed(1)}
+                            </div>
                           </div>
                         </div>
+                      </div>
+                      
+                      <div className="mt-2 flex justify-end">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleShowPlayerFixtures(player);
+                          }}
+                          className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded hover:bg-blue-200"
+                        >
+                          View Fixtures
+                        </button>
                       </div>
                     </div>
                   );
@@ -1318,6 +1353,14 @@ export default function SquadPlanner() {
           </div>
         </div>
       )}
+
+      {/* Player Fixture Popup */}
+      <PlayerFixturePopup
+        player={selectedPlayerForFixtures}
+        currentGameweek={currentGameweek}
+        isOpen={showFixturePopup}
+        onClose={handleCloseFixturePopup}
+      />
     </div>
   );
 } 

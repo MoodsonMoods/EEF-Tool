@@ -40,6 +40,83 @@
   .table-cell {
     @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900;
   }
+  
+  /* PlayerCard Styles */
+  .player-card {
+    @apply bg-white border border-gray-200 rounded-lg p-4 shadow-sm;
+  }
+  
+  .player-header {
+    @apply flex justify-between items-start mb-3;
+  }
+  
+  .player-info {
+    @apply flex-1;
+  }
+  
+  .player-name {
+    @apply font-medium text-gray-900 text-sm;
+  }
+  
+  .player-details {
+    @apply flex space-x-2 text-xs text-gray-600 mt-1;
+  }
+  
+  .player-actions {
+    @apply flex space-x-1;
+  }
+  
+  .remove-btn {
+    @apply text-red-500 hover:text-red-700 text-lg font-bold cursor-pointer;
+  }
+  
+  .player-stats {
+    @apply space-y-1 mb-3;
+  }
+  
+  .stat-row {
+    @apply flex justify-between text-xs;
+  }
+  
+  .stat-label {
+    @apply text-gray-500;
+  }
+  
+  .stat-value {
+    @apply font-medium text-gray-900;
+  }
+  
+  .fixture-info {
+    @apply mb-3;
+  }
+  
+  .difficulty-badge {
+    @apply inline-block px-2 py-1 text-xs font-medium rounded mb-1;
+  }
+  
+  .fixture-details {
+    @apply text-xs text-gray-600;
+  }
+  
+  .captain-btn, .vice-captain-btn, .move-btn, .fixtures-btn {
+    @apply w-full text-xs py-1 px-2 rounded mb-1 transition-colors;
+  }
+  
+  .captain-btn {
+    @apply bg-yellow-100 text-yellow-800 hover:bg-yellow-200;
+  }
+  
+  .vice-captain-btn {
+    @apply bg-orange-100 text-orange-800 hover:bg-orange-200;
+  }
+  
+  .move-btn {
+    @apply bg-gray-100 text-gray-800 hover:bg-gray-200;
+  }
+  
+  .fixtures-btn {
+    @apply bg-blue-100 text-blue-800 hover:bg-blue-200;
+  }
 }
 
 @layer utilities {

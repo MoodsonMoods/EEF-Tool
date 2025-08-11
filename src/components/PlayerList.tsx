@@ -8,6 +8,7 @@ interface PlayerListProps {
   selectedPosition: Position | 'ALL';
   searchTerm: string;
   onPlayerSelect: (player: Player) => void;
+  onViewFixtures?: (player: Player) => void;
   selectedPlayerIds: number[];
 }
 
@@ -16,6 +17,7 @@ function PlayerList({
   selectedPosition, 
   searchTerm, 
   onPlayerSelect,
+  onViewFixtures,
   selectedPlayerIds 
 }: PlayerListProps) {
   const [sortBy, setSortBy] = useState<'totalPoints' | 'nowCost' | 'form' | 'webName'>('totalPoints');
@@ -121,6 +123,19 @@ function PlayerList({
             {isPlayerSelected(player.id) && (
               <div className="selected-indicator">✓ Selected</div>
             )}
+            
+            {onViewFixtures && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onViewFixtures(player);
+                }}
+                className="view-fixtures-btn"
+                title="View upcoming fixtures"
+              >
+                View Fixtures
+              </button>
+            )}
           </div>
         ))}
       </div>
@@ -200,6 +215,10 @@ function PlayerList({
         
         .selected-indicator {
           @apply mt-2 text-sm text-blue-600 font-medium text-center;
+        }
+        
+        .view-fixtures-btn {
+          @apply mt-2 w-full px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded hover:bg-blue-200 transition-colors;
         }
         
         .no-players {

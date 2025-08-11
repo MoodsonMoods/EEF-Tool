@@ -9,6 +9,7 @@ interface PlayerCardProps {
   onSetViceCaptain?: (playerId: number) => void;
   onMoveToBench?: (playerId: number) => void;
   onMoveToStartingXI?: (playerId: number) => void;
+  onViewFixtures?: (player: Player) => void;
   fixture?: any;
 }
 
@@ -21,6 +22,7 @@ export default function PlayerCard({
   onSetViceCaptain,
   onMoveToBench,
   onMoveToStartingXI,
+  onViewFixtures,
   fixture
 }: PlayerCardProps) {
   if (!player) {
@@ -149,6 +151,16 @@ export default function PlayerCard({
           title="Set as vice captain"
         >
           Set VC
+        </button>
+      )}
+
+      {onViewFixtures && (
+        <button 
+          onClick={() => onViewFixtures(player)}
+          className="fixtures-btn"
+          title="View upcoming fixtures"
+        >
+          View Fixtures
         </button>
       )}
     </div>
