@@ -30,6 +30,7 @@ export default function SquadPlanner() {
   const [pendingTransferOut, setPendingTransferOut] = useState<number | null>(null);
   const [pendingTransferSlot, setPendingTransferSlot] = useState<SquadSlot | null>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const [transferModalSearch, setTransferModalSearch] = useState('');
 
   const {
     currentFormation,
@@ -323,6 +324,7 @@ export default function SquadPlanner() {
   const handleTransfer = (playerOutId: number) => {
     setSelectedPlayerForModal(players.find(p => p.id === playerOutId) || null);
     setShowPlayerModal(true);
+    setTransferModalSearch(''); // Reset search when opening modal
   };
 
   const handleConfirmTransfer = (playerInId: number) => {
@@ -359,6 +361,7 @@ export default function SquadPlanner() {
     
     setShowPlayerModal(false);
     setSelectedPlayerForModal(null);
+    setTransferModalSearch(''); // Reset search when closing modal
   };
 
   const handleFormationChange = (newFormation: { gk: number; def: number; mid: number; fwd: number }) => {
@@ -1186,11 +1189,24 @@ export default function SquadPlanner() {
                 onClick={() => {
                   setShowPlayerModal(false);
                   setSelectedPlayerForModal(null);
+                  setTransferModalSearch('');
                 }}
                 className="text-gray-500 hover:text-gray-700"
               >
                 ✕
               </button>
+            </div>
+            
+            {/* Search Bar */}
+            <div className="mb-4">
+              <input
+                type="text"
+                placeholder="Search players by name or team..."
+                value={transferModalSearch}
+                onChange={(e) => setTransferModalSearch(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                autoFocus
+              />
             </div>
             
             <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -1209,7 +1225,13 @@ export default function SquadPlanner() {
                     player.id !== selectedPlayerForModal.id && 
                     !selectedPlayers.some(slot => slot.playerId === player.id) &&
                     getPositionFromElementType(player.elementType) === playerOutPosition &&
-                    (player.nowCost / 10) <= availableBudget
+                    (player.nowCost / 10) <= availableBudget &&
+                    // Add search filter
+                    (transferModalSearch === '' || 
+                     player.webName.toLowerCase().includes(transferModalSearch.toLowerCase()) ||
+                     player.firstName.toLowerCase().includes(transferModalSearch.toLowerCase()) ||
+                     player.secondName.toLowerCase().includes(transferModalSearch.toLowerCase()) ||
+                     player.team.name.toLowerCase().includes(transferModalSearch.toLowerCase()))
                   )
                   .sort((a, b) => {
                     // Sort by value (points per million) first, then by total points
@@ -1225,9 +1247,14 @@ export default function SquadPlanner() {
                 if (eligiblePlayers.length === 0) {
                   return (
                     <div className="text-center py-8 text-gray-500">
-                      <p>No eligible players found.</p>
+                      <p>
+                        {transferModalSearch ? 'No players found matching your search.' : 'No eligible players found.'}
+                      </p>
                       <p className="text-xs mt-1">
-                        Looking for {getPositionName(playerOutPosition)} players within £{availableBudget.toFixed(1)} budget.
+                        {transferModalSearch 
+                          ? `Try adjusting your search terms.`
+                          : `Looking for ${getPositionName(playerOutPosition)} players within £${availableBudget.toFixed(1)} budget.`
+                        }
                       </p>
                     </div>
                   );
