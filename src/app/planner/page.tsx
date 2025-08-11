@@ -1204,7 +1204,7 @@ export default function SquadPlanner() {
                 const playerOutCost = playerOut.nowCost / 10;
                 const availableBudget = budgetRemaining + playerOutCost;
                 
-                const eligiblePlayers = filteredPlayers
+                const eligiblePlayers = players
                   .filter(player => 
                     player.id !== selectedPlayerForModal.id && 
                     !selectedPlayers.some(slot => slot.playerId === player.id) &&

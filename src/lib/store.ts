@@ -394,24 +394,23 @@ export const useStore = create<Store>()(
       },
 
       makeTransfer: (playerOutId: number, playerInId: number) => {
-        const { selectedPlayers, freeTransfers, currentGameweek, transferHistory } = get();
-        
-        // Check if player out exists in squad
-        const playerOutIndex = selectedPlayers.findIndex(p => p.playerId === playerOutId);
-        if (playerOutIndex === -1) {
-          return { success: false, cost: 0, message: 'Player not found in squad' };
+        const { selectedPlayers, freeTransfers, currentGameweek } = get();
+
+        // Prevent no-op or duplicate
+        if (playerOutId === playerInId) {
+          return { success: false, cost: 0, message: 'Cannot transfer the same player' };
         }
-        
+
         // Check if player in is already in squad
         const playerInExists = selectedPlayers.some(p => p.playerId === playerInId);
         if (playerInExists) {
           return { success: false, cost: 0, message: 'Player already in squad' };
         }
-        
+
         // Calculate transfer cost
         let cost = 0;
         let message = 'Free transfer used';
-        
+
         if (freeTransfers === Infinity || freeTransfers > 0) {
           // Use free transfer (unlimited in gameweek 1, or available free transfers)
           if (freeTransfers !== Infinity) {
@@ -422,7 +421,7 @@ export const useStore = create<Store>()(
           cost = 4;
           message = 'Extra transfer (-4 points)';
         }
-        
+
         // Record the transfer
         const transferRecord = {
           id: Date.now().toString(),
@@ -432,12 +431,12 @@ export const useStore = create<Store>()(
           timestamp: new Date().toISOString(),
           cost
         };
-        
+
         set(state => ({ 
           transferHistory: [...state.transferHistory, transferRecord],
           transferCount: state.transferCount + 1
         }));
-        
+
         return { success: true, cost, message };
       },
 
