@@ -23,7 +23,7 @@
     "squadMaxSelect": null,
     "squadMinPlay": 3,
     "squadMaxPlay": 5,
-    "elementCount": 173
+    "elementCount": 176
   },
   {
     "id": 3,
@@ -36,7 +36,7 @@
     "squadMaxSelect": null,
     "squadMinPlay": 2,
     "squadMaxPlay": 5,
-    "elementCount": 241
+    "elementCount": 245
   },
   {
     "id": 4,
