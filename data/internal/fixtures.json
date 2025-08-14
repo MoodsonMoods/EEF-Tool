@@ -1693,6 +1693,22 @@
     "stats": []
   },
   {
+    "id": 45,
+    "code": 2560872,
+    "event": 5,
+    "finished": false,
+    "finishedProvisional": false,
+    "kickoffTime": "2025-09-17T18:00:00Z",
+    "minutes": 0,
+    "provisionalStartTime": false,
+    "started": false,
+    "teamA": 7,
+    "teamAScore": null,
+    "teamH": 6,
+    "teamHScore": null,
+    "stats": []
+  },
+  {
     "id": 46,
     "code": 2560873,
     "event": 6,
@@ -1833,22 +1849,6 @@
     "teamA": 6,
     "teamAScore": null,
     "teamH": 2,
-    "teamHScore": null,
-    "stats": []
-  },
-  {
-    "id": 45,
-    "code": 2560872,
-    "event": 6,
-    "finished": false,
-    "finishedProvisional": false,
-    "kickoffTime": "2025-09-24T19:00:00Z",
-    "minutes": 0,
-    "provisionalStartTime": false,
-    "started": false,
-    "teamA": 7,
-    "teamAScore": null,
-    "teamH": 6,
     "teamHScore": null,
     "stats": []
   },
