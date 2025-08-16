@@ -1137,16 +1137,121 @@
     "code": 2560837,
     "event": 2,
     "finished": false,
-    "finishedProvisional": false,
+    "finishedProvisional": true,
     "kickoffTime": "2025-08-15T18:00:00Z",
-    "minutes": 0,
+    "minutes": 90,
     "provisionalStartTime": false,
-    "started": false,
+    "started": true,
     "teamA": 12,
-    "teamAScore": null,
+    "teamAScore": 2,
     "teamH": 16,
-    "teamHScore": null,
-    "stats": []
+    "teamHScore": 0,
+    "stats": [
+      {
+        "identifier": "goals_scored",
+        "a": [
+          {
+            "value": 2,
+            "element": 502
+          }
+        ],
+        "h": []
+      },
+      {
+        "identifier": "assists",
+        "a": [
+          {
+            "value": 2,
+            "element": 383
+          }
+        ],
+        "h": []
+      },
+      {
+        "identifier": "penalties_saved",
+        "a": [],
+        "h": []
+      },
+      {
+        "identifier": "penalties_missed",
+        "a": [],
+        "h": []
+      },
+      {
+        "identifier": "yellow_cards",
+        "a": [
+          {
+            "value": 1,
+            "element": 378
+          },
+          {
+            "value": 1,
+            "element": 381
+          },
+          {
+            "value": 1,
+            "element": 383
+          }
+        ],
+        "h": [
+          {
+            "value": 1,
+            "element": 461
+          },
+          {
+            "value": 1,
+            "element": 474
+          },
+          {
+            "value": 1,
+            "element": 481
+          }
+        ]
+      },
+      {
+        "identifier": "red_cards",
+        "a": [],
+        "h": []
+      },
+      {
+        "identifier": "saves",
+        "a": [
+          {
+            "value": 5,
+            "element": 144
+          }
+        ],
+        "h": [
+          {
+            "value": 1,
+            "element": 457
+          }
+        ]
+      },
+      {
+        "identifier": "own_goals",
+        "a": [],
+        "h": []
+      },
+      {
+        "identifier": "bonus",
+        "a": [
+          {
+            "value": 3,
+            "element": 502
+          },
+          {
+            "value": 2,
+            "element": 383
+          },
+          {
+            "value": 1,
+            "element": 371
+          }
+        ],
+        "h": []
+      }
+    ]
   },
   {
     "id": 11,
@@ -1321,22 +1426,6 @@
     "teamA": 17,
     "teamAScore": null,
     "teamH": 16,
-    "teamHScore": null,
-    "stats": []
-  },
-  {
-    "id": 22,
-    "code": 2560850,
-    "event": 3,
-    "finished": false,
-    "finishedProvisional": false,
-    "kickoffTime": "2025-08-24T10:15:00Z",
-    "minutes": 0,
-    "provisionalStartTime": false,
-    "started": false,
-    "teamA": 12,
-    "teamAScore": null,
-    "teamH": 2,
     "teamHScore": null,
     "stats": []
   },
@@ -1853,6 +1942,22 @@
     "stats": []
   },
   {
+    "id": 22,
+    "code": 2560850,
+    "event": 6,
+    "finished": false,
+    "finishedProvisional": false,
+    "kickoffTime": "2025-09-24T18:00:00Z",
+    "minutes": 0,
+    "provisionalStartTime": false,
+    "started": false,
+    "teamA": 12,
+    "teamAScore": null,
+    "teamH": 2,
+    "teamHScore": null,
+    "stats": []
+  },
+  {
     "id": 55,
     "code": 2560882,
     "event": 7,
@@ -1869,8 +1974,8 @@
     "stats": []
   },
   {
-    "id": 58,
-    "code": 2560883,
+    "id": 61,
+    "code": 2560889,
     "event": 7,
     "finished": false,
     "finishedProvisional": false,
@@ -1878,9 +1983,9 @@
     "minutes": 0,
     "provisionalStartTime": false,
     "started": false,
-    "teamA": 6,
+    "teamA": 15,
     "teamAScore": null,
-    "teamH": 3,
+    "teamH": 9,
     "teamHScore": null,
     "stats": []
   },
@@ -1949,6 +2054,22 @@
     "stats": []
   },
   {
+    "id": 58,
+    "code": 2560883,
+    "event": 7,
+    "finished": false,
+    "finishedProvisional": false,
+    "kickoffTime": "2025-09-28T12:30:00Z",
+    "minutes": 0,
+    "provisionalStartTime": false,
+    "started": false,
+    "teamA": 6,
+    "teamAScore": null,
+    "teamH": 3,
+    "teamHScore": null,
+    "stats": []
+  },
+  {
     "id": 60,
     "code": 2560888,
     "event": 7,
@@ -1961,22 +2082,6 @@
     "teamA": 14,
     "teamAScore": null,
     "teamH": 5,
-    "teamHScore": null,
-    "stats": []
-  },
-  {
-    "id": 61,
-    "code": 2560889,
-    "event": 7,
-    "finished": false,
-    "finishedProvisional": false,
-    "kickoffTime": "2025-09-28T12:30:00Z",
-    "minutes": 0,
-    "provisionalStartTime": false,
-    "started": false,
-    "teamA": 15,
-    "teamAScore": null,
-    "teamH": 9,
     "teamHScore": null,
     "stats": []
   },
