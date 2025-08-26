@@ -54,7 +54,7 @@
     "deadlineTimeEpoch": 1755959100,
     "averageEntryScore": 45,
     "finished": true,
-    "dataChecked": false,
+    "dataChecked": true,
     "highestScoringEntry": 75394,
     "highestScore": 120,
     "isPrevious": false,
