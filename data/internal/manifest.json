@@ -1,10 +1,10 @@
 {
   "schemaVersion": "1.0.0",
-  "dataVersion": "2025-08-26",
-  "timestamp": "2025-08-26T03:06:26.853Z",
+  "dataVersion": "2025-08-27",
+  "timestamp": "2025-08-27T03:00:13.107Z",
   "source": {
-    "rawDataDir": "030621",
-    "rawDataTimestamp": "2025-08-26/030621"
+    "rawDataDir": "030006",
+    "rawDataTimestamp": "2025-08-27/030006"
   },
   "counts": {
     "players": 574,
