@@ -1,13 +1,13 @@
 {
   "schemaVersion": "1.0.0",
-  "dataVersion": "2025-09-04",
-  "timestamp": "2025-09-04T02:53:15.701Z",
+  "dataVersion": "2025-09-05",
+  "timestamp": "2025-09-05T02:56:07.349Z",
   "source": {
-    "rawDataDir": "025309",
-    "rawDataTimestamp": "2025-09-04/025309"
+    "rawDataDir": "025601",
+    "rawDataTimestamp": "2025-09-05/025601"
   },
   "counts": {
-    "players": 594,
+    "players": 597,
     "teams": 18,
     "events": 34,
     "elementTypes": 4
