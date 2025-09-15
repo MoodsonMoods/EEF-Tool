@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0.0",
+  "dataVersion": "2025-09-15",
+  "timestamp": "2025-09-15T03:04:39.289Z",
+  "ingestion": {
+    "startTime": "2025-09-15T03:04:39.289Z",
+    "endTime": "2025-09-15T03:04:39.289Z",
+    "results": [
+      {
+        "name": "bootstrap-static",
+        "success": true,
+        "timestamp": "2025-09-15T03:04:34.558Z",
+        "size": 960525
+      },
+      {
+        "name": "fixtures",
+        "success": true,
+        "timestamp": "2025-09-15T03:04:36.006Z",
+        "size": 188449
+      },
+      {
+        "name": "my-team",
+        "success": true,
+        "timestamp": "2025-09-15T03:04:37.149Z",
+        "size": 60
+      },
+      {
+        "name": "account-info",
+        "success": true,
+        "timestamp": "2025-09-15T03:04:38.286Z",
+        "size": 37
+      }
+    ]
+  },
+  "counts": {
+    "players": 0,
+    "fixtures": 306,
+    "teams": 0
+  },
+  "hashes": {
+    "players": "",
+    "fixtures": "",
+    "fdr": ""
+  }
+}
