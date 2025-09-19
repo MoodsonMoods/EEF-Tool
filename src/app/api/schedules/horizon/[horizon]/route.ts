@@ -3,7 +3,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 // Configure for static export
-export const dynamic = 'force-static';
+export const dynamic = 'force-dynamic';
 
 // Generate static params for all horizon values
 export async function generateStaticParams() {
@@ -85,7 +85,8 @@ export async function GET(
   try {
     const { horizon: horizonParam } = await params;
     const horizon = parseInt(horizonParam);
-    const startGameweek = 1; // Default start gameweek
+    const { searchParams } = new URL(request.url);
+    const startGameweek = parseInt(searchParams.get('startGameweek') || '1');
 
     // Load team stats
     const teamStatsPath = join(process.cwd(), 'data', 'internal', 'team-stats-2024-25-csv-import.json');
@@ -106,7 +107,7 @@ export async function GET(
 
     // Filter fixtures starting from the specified gameweek
     const upcomingFixtures = fixturesData
-      .filter(fixture => !fixture.finished && fixture.event >= startGameweek)
+      .filter(fixture => fixture.event >= startGameweek)
       .sort((a, b) => new Date(a.kickoffTime).getTime() - new Date(b.kickoffTime).getTime())
       .slice(0, horizon * 18); // 18 teams, so up to 18 fixtures per gameweek
 

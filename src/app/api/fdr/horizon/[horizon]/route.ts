@@ -4,7 +4,7 @@ import { join } from 'path';
 import { FDRCalculator } from '@/lib/fdr-calculator';
 
 // Configure for static export
-export const dynamic = 'force-static';
+export const dynamic = 'force-dynamic';
 
 // Generate static params for all horizon values
 export async function generateStaticParams() {
@@ -51,7 +51,8 @@ export async function GET(
   try {
     const { horizon: horizonParam } = await params;
     const horizon = parseInt(horizonParam);
-    const startGameweek = 1; // Default start gameweek
+    const { searchParams } = new URL(request.url);
+    const startGameweek = parseInt(searchParams.get('startGameweek') || '1');
 
     // Load team stats from data file
     const teamStatsPath = join(process.cwd(), 'data', 'internal', 'team-stats-2024-25.json');

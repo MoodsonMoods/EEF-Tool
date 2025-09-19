@@ -98,7 +98,7 @@ export default function FDRPage() {
     
     try {
       // Fetch FDR data from API using static endpoints
-      const fdrResponse = await fetch(`/api/fdr/horizon/${selectedHorizon}`);
+      const fdrResponse = await fetch(`/api/fdr/horizon/${selectedHorizon}?startGameweek=${selectedStartGameweek}`);
       const fdrData = await fdrResponse.json();
       
       if (!fdrData.success) {
@@ -109,7 +109,7 @@ export default function FDRPage() {
       setDefenceFDR(fdrData.data.defence);
 
       // Fetch team schedules from API using static endpoints
-      const schedulesResponse = await fetch(`/api/schedules/horizon/${selectedHorizon}`);
+      const schedulesResponse = await fetch(`/api/schedules/horizon/${selectedHorizon}?startGameweek=${selectedStartGameweek}`);
       const schedulesData = await schedulesResponse.json();
       
       if (!schedulesData.success) {

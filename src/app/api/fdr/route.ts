@@ -4,7 +4,7 @@ import { join } from 'path';
 import { FDRCalculator } from '@/lib/fdr-calculator';
 
 // Configure for static export
-export const dynamic = 'force-static';
+export const dynamic = 'force-dynamic';
 
 // Load team stats from data file
 const teamStatsPath = join(process.cwd(), 'data', 'internal', 'team-stats-2024-25.json');
