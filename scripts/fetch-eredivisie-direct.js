@@ -4,10 +4,10 @@ const fs = require('fs');
 const path = require('path');
 
 // FBref URLs for Eredivisie (from worldfootballR data)
-const EREDIVISIE_URLS = {
-  '2024-2025': 'https://fbref.com/en/comps/23/2024-2025/2024-2025-Eredivisie-Stats',
-  '2023-2024': 'https://fbref.com/en/comps/23/2023-2024/2023-2024-Eredivisie-Stats'
-};
+function buildSeasonUrl(season) {
+  // FBref convention uses season twice in path and title
+  return `https://fbref.com/en/comps/23/${season}/${season}-Eredivisie-Stats`;
+}
 
 // Helper function to delay execution
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -32,7 +32,13 @@ function parseLeagueTable(html) {
   
   try {
     // Look for the main stats table
-    const tableMatch = html.match(/<table[^>]*id="stats_standard_squads"[^>]*>([\s\S]*?)<\/table>/);
+    // FBref often comments out tables; capture commented or visible table
+    let tableHTMLBlock = html;
+    const commentedMatch = html.match(/<!--\s*<table[^>]*id=\"stats_standard_squads\"[\s\S]*?<\/table>\s*-->/);
+    if (commentedMatch) {
+      tableHTMLBlock = commentedMatch[0].replace(/^<!--\s*/, '').replace(/\s*-->$/, '');
+    }
+    const tableMatch = tableHTMLBlock.match(/<table[^>]*id=\"stats_standard_squads\"[^>]*>([\s\S]*?)<\/table>/);
     if (!tableMatch) {
       console.log('❌ Stats table not found in HTML');
       return null;
@@ -51,19 +57,19 @@ function parseLeagueTable(html) {
     
     for (const rowHTML of rowMatches) {
       // Skip header rows
-      if (rowHTML.includes('thead') || rowHTML.includes('th')) {
+      if (rowHTML.includes('thead')) {
         continue;
       }
       
       // Extract cells
-      const cellMatches = rowHTML.match(/<td[^>]*>([\s\S]*?)<\/td>/g);
+      const cellMatches = rowHTML.match(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/g);
       if (!cellMatches || cellMatches.length < 10) {
         continue;
       }
       
       // Parse cell content
       const cells = cellMatches.map(cell => {
-        const content = cell.replace(/<[^>]*>/g, '').trim();
+        const content = cell.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').trim();
         return content;
       });
       
@@ -85,7 +91,7 @@ function parseLeagueTable(html) {
         xGD90: cells[13]
       };
       
-      if (teamData.squad && teamData.squad !== 'Squad') {
+      if (teamData.squad && teamData.squad !== 'Squad' && !isNaN(teamData.rank)) {
         teams.push(teamData);
       }
     }
@@ -190,7 +196,8 @@ function saveTeamStats(processedTeams, season) {
     }
   };
   
-  const outputPath = path.join(__dirname, '..', 'data', 'internal', 'team-stats-2024-25-direct.json');
+  const seasonForFile = season.replace('2024-2025', '2024-25').replace('2025-2026', '2025-26');
+  const outputPath = path.join(__dirname, '..', 'data', 'internal', `team-stats-${seasonForFile}-direct.json`);
   fs.writeFileSync(outputPath, JSON.stringify(outputData, null, 2));
   
   console.log(`💾 Data saved to: ${outputPath}`);
@@ -201,17 +208,17 @@ function saveTeamStats(processedTeams, season) {
 async function main() {
   console.log('🚀 Starting Eredivisie data fetch via direct FBref scraping...\n');
   
-  // Try seasons in order
-  const seasons = ['2024-2025', '2023-2024'];
+  // Parse season flag
+  const seasonArg = process.argv.find(arg => arg.startsWith('--season='));
+  const requestedSeason = seasonArg ? seasonArg.split('=')[1] : '2024-2025';
+  
+  // Try requested season first, then fallback
+  const seasons = [requestedSeason, '2024-2025', '2023-2024'];
   
   for (const season of seasons) {
     console.log(`📅 Trying season: ${season}`);
     
-    const url = EREDIVISIE_URLS[season];
-    if (!url) {
-      console.log(`❌ No URL found for season ${season}`);
-      continue;
-    }
+    const url = buildSeasonUrl(season);
     
     console.log(`🔍 Fetching: ${url}`);
     

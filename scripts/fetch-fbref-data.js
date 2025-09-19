@@ -70,7 +70,7 @@ async function generateApiKey() {
   }
 }
 
-// Step 2: Find Eredivisie league ID
+// Step 2: Find Eredivisie league ID (uses country_code and nested leagues list)
 async function findEredivisieLeagueId(apiKey) {
   console.log('🔍 Finding Eredivisie league ID...');
   
@@ -89,15 +89,34 @@ async function findEredivisieLeagueId(apiKey) {
     
     console.log(`✅ Found Netherlands with country code: ${netherlands.country_code}`);
     
-    // Get leagues for Netherlands
+    // Get leagues for Netherlands using country_code
     const leaguesResponse = await makeApiRequest('/leagues', { 
-      country: netherlands.country_code 
+      country_code: netherlands.country_code 
     }, apiKey);
     await delay(RATE_LIMIT_DELAY);
     
-    const eredivisie = leaguesResponse.data.find(league => 
-      league.league_name.toLowerCase().includes('eredivisie')
-    );
+    // The response can be nested by categories with a leagues array
+    let eredivisie = null;
+    if (Array.isArray(leaguesResponse.data)) {
+      for (const category of leaguesResponse.data) {
+        if (category.leagues && Array.isArray(category.leagues)) {
+          const found = category.leagues.find(league => 
+            (league.competition_name || league.league_name || '').toLowerCase().includes('eredivisie') &&
+            (league.gender ? league.gender === 'M' : true)
+          );
+          if (found) {
+            eredivisie = found;
+            break;
+          }
+        }
+      }
+      // Fallback to flat list if not found in nested
+      if (!eredivisie) {
+        eredivisie = leaguesResponse.data.find(league => 
+          (league.competition_name || league.league_name || '').toLowerCase().includes('eredivisie')
+        );
+      }
+    }
     
     if (!eredivisie) {
       throw new Error('Eredivisie not found in leagues list');
@@ -111,14 +130,14 @@ async function findEredivisieLeagueId(apiKey) {
   }
 }
 
-// Step 3: Get team season stats for Eredivisie 2024-2025
-async function getTeamSeasonStats(apiKey, leagueId) {
-  console.log('📊 Fetching team season stats for Eredivisie 2024-2025...');
+// Step 3: Get team season stats for a given season
+async function getTeamSeasonStats(apiKey, leagueId, seasonId) {
+  console.log(`📊 Fetching team season stats for Eredivisie ${seasonId}...`);
   
   try {
     const response = await makeApiRequest('/team-season-stats', {
       league_id: leagueId,
-      season_id: '2024-2025'
+      season_id: seasonId
     }, apiKey);
     
     console.log(`✅ Retrieved stats for ${response.data.length} teams`);
@@ -136,17 +155,23 @@ function processTeamStats(teamStats) {
   const processedTeams = {};
   
   teamStats.forEach(team => {
-    const teamName = team.team_name;
+    const rawName = team.meta_data?.team_name || team.team_name || team.team || team.name || '';
+    if (typeof rawName !== 'string' || rawName.trim().length === 0) {
+      return; // skip malformed entry
+    }
+    const teamName = rawName.trim();
     
     // Extract xG and xGC from the stats
-    // Note: Field names might vary, we'll need to check the actual response
-    const xGFor = team.xg_for || team.xg || 0;
-    const xGConceded = team.xg_against || team.xga || 0;
-    const goalsFor = team.goals_for || team.gf || 0;
-    const goalsConceded = team.goals_against || team.ga || 0;
+    // Note: Data is nested under stats.stats for team-season-stats endpoint
+    const statRoot = team.stats?.stats || {};
+    const xGFor = statRoot.xg_for_per90 ?? statRoot.xg_for ?? statRoot.xg ?? statRoot.npxg_for_per90 ?? statRoot.npxg_for ?? 0;
+    const xGConceded = statRoot.xg_against_per90 ?? statRoot.xga ?? statRoot.xg_against ?? 0;
+    const goalsFor = statRoot.goals_for_per90 ?? statRoot.goals_for ?? statRoot.gf ?? 0;
+    const goalsConceded = statRoot.goals_against_per90 ?? statRoot.goals_against ?? statRoot.ga ?? 0;
+    const teamId = team.meta_data?.team_id ?? team.team_id ?? team.id ?? 0;
     
     processedTeams[teamName] = {
-      id: team.team_id,
+      id: teamId,
       name: teamName,
       shortName: teamName.split(' ').map(word => word[0]).join('').toUpperCase(),
       xGFor: parseFloat(xGFor) || 0,
@@ -166,11 +191,14 @@ function processTeamStats(teamStats) {
 }
 
 // Step 5: Save data to file
-function saveTeamStats(processedTeams) {
-  const outputPath = path.join(__dirname, '..', 'data', 'internal', 'team-stats-2024-25-fbref.json');
+function saveTeamStats(processedTeams, seasonId) {
+  // Normalize season string for filename like 2025-26
+  const seasonForFile = seasonId.replace('2024-2025', '2024-25').replace('2025-2026', '2025-26');
+  const defaultFile = `team-stats-${seasonForFile}-fbref.json`;
+  const outputPath = path.join(__dirname, '..', 'data', 'internal', defaultFile);
   
   const outputData = {
-    season: "2024-2025",
+    season: seasonId,
     lastUpdated: new Date().toISOString(),
     dataSource: "FBref via FBR API",
     teams: processedTeams,
@@ -197,7 +225,10 @@ function saveTeamStats(processedTeams) {
 
 // Main execution function
 async function main() {
-  console.log('🚀 Starting FBR API data fetch for Eredivisie 2024-2025...\n');
+  // Parse season from CLI args: --season=YYYY-YYYY
+  const seasonArg = process.argv.find(arg => arg.startsWith('--season='));
+  const seasonId = seasonArg ? seasonArg.split('=')[1] : '2024-2025';
+  console.log(`🚀 Starting FBR API data fetch for Eredivisie ${seasonId}...\n`);
   
   try {
     // Step 1: Generate API key
@@ -209,13 +240,20 @@ async function main() {
     await delay(RATE_LIMIT_DELAY);
     
     // Step 3: Get team season stats
-    const teamStats = await getTeamSeasonStats(apiKey, leagueId);
+    const teamStats = await getTeamSeasonStats(apiKey, leagueId, seasonId);
+    if (Array.isArray(teamStats) && teamStats.length > 0) {
+      console.log('🔎 Sample team stats entry shape:', Object.keys(teamStats[0] || {}));
+      console.log('🔎 meta_data keys:', Object.keys(teamStats[0]?.meta_data || {}));
+      console.log('🔎 stats keys:', Object.keys(teamStats[0]?.stats || {}));
+    } else {
+      console.log('⚠️ Team stats response is empty or not an array');
+    }
     
     // Step 4: Process the data
     const processedTeams = processTeamStats(teamStats);
     
     // Step 5: Save to file
-    const outputPath = saveTeamStats(processedTeams);
+    const outputPath = saveTeamStats(processedTeams, seasonId);
     
     console.log('\n🎉 Successfully fetched and processed Eredivisie team stats!');
     console.log(`📁 Data saved to: ${outputPath}`);

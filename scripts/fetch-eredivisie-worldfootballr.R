@@ -1,11 +1,19 @@
 #!/usr/bin/env Rscript
 
+# Set CRAN mirror for non-interactive installs
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+
 # Install and load worldfootballR if not already installed
 if (!require(worldfootballR, quietly = TRUE)) {
-  if (!require(devtools, quietly = TRUE)) {
-    install.packages("devtools")
-  }
-  devtools::install_github("JaseZiv/worldfootballR")
+  tryCatch({
+    install.packages("worldfootballR", dependencies = TRUE)
+  }, error = function(e) {
+    if (!require(devtools, quietly = TRUE)) {
+      install.packages("devtools")
+    }
+    devtools::install_github("JaseZiv/worldfootballR")
+  })
+  library(worldfootballR)
 }
 
 library(worldfootballR)
@@ -151,7 +159,9 @@ save_eredivisie_data <- function(processed_teams, season) {
   )
   
   # Save to file
-  output_path <- file.path("data", "internal", "team-stats-2024-25-worldfootballr.json")
+  season_for_file <- gsub("2024-2025", "2024-25", season)
+  season_for_file <- gsub("2025-2026", "2025-26", season_for_file)
+  output_path <- file.path("data", "internal", paste0("team-stats-", season_for_file, "-worldfootballr.json"))
   write_json(output_data, output_path, pretty = TRUE, auto_unbox = TRUE)
   
   cat("💾 Data saved to:", output_path, "\n")
@@ -162,8 +172,19 @@ save_eredivisie_data <- function(processed_teams, season) {
 main <- function() {
   cat("🚀 Starting Eredivisie data fetch with worldfootballR...\n\n")
   
-  # Try 2024-2025 first, fallback to 2023-2024
-  seasons_to_try <- c("2024-2025", "2023-2024")
+  # Parse --season=YYYY-YYYY from commandArgs
+  args <- commandArgs(trailingOnly = TRUE)
+  requested_season <- NULL
+  if (length(args) > 0) {
+    for (a in args) {
+      if (startsWith(a, "--season=")) {
+        requested_season <- sub("--season=", "", a, fixed = TRUE)
+      }
+    }
+  }
+  
+  # Try requested season first, then fallbacks
+  seasons_to_try <- unique(na.omit(c(requested_season, "2025-2026", "2024-2025", "2023-2024")))
   
   for (season in seasons_to_try) {
     cat("📅 Trying season:", season, "\n")

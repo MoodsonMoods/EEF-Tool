@@ -12,7 +12,12 @@
     "ingest": "node scripts/ingest.js",
     "normalize": "node scripts/normalize.js",
     "generate-types": "node scripts/generate-types.js",
-    "update-data": "./scripts/update-data.sh",
+    "scrape-fbref-2526": "node scripts/fetch-fbref-puppeteer.js --season=2025-2026",
+    "update-fdr-from-scrape": "node scripts/update-fdr-calculator.js",
+    "fetch-fbref-players": "node scripts/fetch-fbref-player-stats.js",
+    "fetch-fbref-players-direct": "node scripts/fetch-fbref-players-direct.js",
+    "scrape-and-update": "npm run scrape-fbref-2526 && npm run update-fdr-from-scrape",
+    "update-data": "npm run ingest && npm run normalize && npm run generate-types && npm run fetch-fbref-players-direct && npm run scrape-and-update",
     "deploy": "npm run build && vercel --prod"
   },
   "dependencies": {

@@ -28,24 +28,29 @@ export class FDRCalculator {
     VERY_HARD: 5,
   };
 
-  private static readonly TEAM_FDR_MAPPING = {
-    // Attack FDR mapping based on 2023-2024 season performance
+    private static readonly TEAM_FDR_MAPPING = {
+    // Attack FDR mapping based on 2025-2026 season performance (xG For)
     attack: {
-      5: ['PSV', 'Feyenoord'],           // Very Hard
-      4: ['AZ', 'Ajax'],                 // Hard
-      3: ['FC Utrecht', 'FC Twente', 'N.E.C.', 'Sparta Rotterdam', 'Go Ahead Eagles', 'FC Groningen', 'sc Heerenveen', 'Fortuna Sittard'], // Medium
-      2: ['PEC Zwolle', 'NAC Breda', 'Heracles Almelo'], // Easy
-      1: ['Excelsior', 'FC Volendam', 'Telstar'] // Very Easy
+      5: ['N.E.C.', 'AZ', 'Feyenoord', 'PSV'],           // Very Hard (≥2.04 xG/game)
+      4: ['Ajax', 'sc Heerenveen', 'FC Twente'],                 // Hard (≥1.64 xG/game)
+      3: ['FC Utrecht', 'Go Ahead Eagles', 'FC Groningen', 'Telstar'], // Medium (≥1.40 xG/game)
+      2: ['Sparta Rotterdam', 'PEC Zwolle'], // Easy (≥1.18 xG/game)
+      1: ['Fortuna Sittard', 'Excelsior', 'NAC Breda', 'FC Volendam'] // Very Easy (<1.18 xG/game)
     },
-    // Defence FDR mapping based on 2023-2024 season performance
+    // Defence FDR mapping based on 2025-2026 season performance (xG Conceded)
     defence: {
-      5: ['PSV'],                        // Very Hard
-      4: ['Ajax', 'Feyenoord', 'AZ'],    // Hard
-      3: ['FC Twente', 'Go Ahead Eagles', 'FC Utrecht', 'N.E.C.'], // Medium
-      2: ['sc Heerenveen', 'Sparta Rotterdam', 'Heracles Almelo', 'Fortuna Sittard', 'PEC Zwolle', 'NAC Breda', 'FC Groningen'], // Easy
-      1: ['Telstar', 'FC Volendam', 'Excelsior'] // Very Easy
+      5: ['AZ', 'Feyenoord', 'Ajax', 'sc Heerenveen'],                        // Very Hard (≤1.15 xG/game)
+      4: ['PSV', 'FC Twente', 'FC Utrecht'],    // Hard (≤1.36 xG/game)
+      3: ['N.E.C.', 'Telstar', 'PEC Zwolle'], // Medium (≤1.44 xG/game)
+      2: ['FC Groningen', 'Fortuna Sittard', 'FC Volendam'], // Easy (≤1.76 xG/game)
+      1: ['Go Ahead Eagles', 'Sparta Rotterdam', 'Excelsior', 'NAC Breda'] // Very Easy (>1.76 xG/game)
     }
   };
+
+  // Expose tiers for API consumption without revealing internals
+  static getTeamTierMapping(): { attack: Record<number, string[]>; defence: Record<number, string[]> } {
+    return this.TEAM_FDR_MAPPING;
+  }
 
   private static getTeamFDR(teamName: string, type: 'attack' | 'defence'): number {
     const mapping = this.TEAM_FDR_MAPPING[type];
