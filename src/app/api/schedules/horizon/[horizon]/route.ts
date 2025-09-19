@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { FDRCalculator } from '@/lib/fdr-calculator';
 
 // Configure for static export
 export const dynamic = 'force-dynamic';
@@ -50,32 +51,24 @@ interface TeamSchedule {
   defenceFDRRank: number;
 }
 
-// Hardcoded FDR mapping (same as in fdr-calculator.ts)
-const TEAM_FDR_MAPPING = {
-  attack: {
-    5: ['PSV', 'Feyenoord'],           // Very Hard
-    4: ['AZ', 'Ajax'],                 // Hard
-    3: ['FC Utrecht', 'FC Twente', 'N.E.C.', 'Sparta Rotterdam', 'Go Ahead Eagles', 'FC Groningen', 'sc Heerenveen', 'Fortuna Sittard'], // Medium
-    2: ['PEC Zwolle', 'NAC Breda', 'Heracles Almelo'], // Easy
-    1: ['Excelsior', 'FC Volendam', 'Telstar'] // Very Easy
-  },
-  defence: {
-    5: ['PSV'],                        // Very Hard
-    4: ['Ajax', 'Feyenoord', 'AZ'],    // Hard
-    3: ['FC Twente', 'Go Ahead Eagles', 'FC Utrecht', 'N.E.C.'], // Medium
-    2: ['sc Heerenveen', 'Sparta Rotterdam', 'Heracles Almelo', 'Fortuna Sittard', 'PEC Zwolle', 'NAC Breda', 'FC Groningen'], // Easy
-    1: ['Telstar', 'FC Volendam', 'Excelsior'] // Very Easy
-  }
-};
+// Use the same team tier mapping as the FDR calculator to keep ratings consistent
+const TEAM_FDR_MAPPING = FDRCalculator.getTeamTierMapping();
 
-function getTeamFDR(teamName: string, type: 'attack' | 'defence'): number {
+function getTeamFDRFromCalculator(teamName: string, type: 'attack' | 'defence'): number {
   const mapping = TEAM_FDR_MAPPING[type];
   for (const [fdrLevel, teams] of Object.entries(mapping)) {
-    if (teams.includes(teamName)) {
+    // Case-insensitive exact match first
+    if (teams.some(t => t.toLowerCase() === teamName.toLowerCase())) {
       return parseInt(fdrLevel);
     }
   }
-  return 3; // Default to Medium if team not found
+  // Fallback: loose contains match for minor naming differences
+  for (const [fdrLevel, teams] of Object.entries(mapping)) {
+    if (teams.some(t => t.toLowerCase().includes(teamName.toLowerCase()) || teamName.toLowerCase().includes(t.toLowerCase()))) {
+      return parseInt(fdrLevel);
+    }
+  }
+  return 3;
 }
 
 export async function GET(
@@ -168,8 +161,8 @@ export async function GET(
           opponentId: opponentId,
           opponentName: opponentName || 'Unknown Team',
           isHome: isHome,
-          opponentAttackFDR: opponentName ? getTeamFDR(opponentName, 'attack') : 3, // Use hardcoded mapping
-          opponentDefenceFDR: opponentName ? getTeamFDR(opponentName, 'defence') : 3 // Use hardcoded mapping
+          opponentAttackFDR: opponentName ? getTeamFDRFromCalculator(opponentName, 'attack') : 3,
+          opponentDefenceFDR: opponentName ? getTeamFDRFromCalculator(opponentName, 'defence') : 3
         });
       }
     }
